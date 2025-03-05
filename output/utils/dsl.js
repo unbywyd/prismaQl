@@ -10,7 +10,7 @@ export const QueryCommandTypes = [
     "PRINT",
     "GET_MODEL_NAMES",
     "GET_ENUM_NAMES",
-    "GET_RELATION_TREE",
+    "GET_RELATION_LIST",
 ];
 export const MutationCommandTypes = [
     "ADD_MODEL",
@@ -88,7 +88,7 @@ export function parseCommand(commandStr) {
     const printSchemaPattern = /^PRINT$/i;
     const getModelNamesPattern = /^GET\s+MODEL_NAMES$/i;
     const getModelEnumsPattern = /^GET\s+ENUM_NAMES$/i;
-    const getRelationTreePattern = /^GET\s+RELATION_TREE\s+(\w+)(?:\s+DEPTH\s+(\d+))?$/i;
+    const getRelationListPattern = /^GET\s+RELATION_LIST\s+(\w+)(?:\s+DEPTH\s+(\d+))?$/i;
     if (getModelNamesPattern.test(command)) {
         return { type: "GET_MODEL_NAMES" };
     }
@@ -96,10 +96,10 @@ export function parseCommand(commandStr) {
     if (match) {
         return { type: "GET_MODEL", model: match[1] };
     }
-    match = command.match(getRelationTreePattern);
+    match = command.match(getRelationListPattern);
     if (match) {
         return {
-            type: "GET_RELATION_TREE",
+            type: "GET_RELATION_LIST",
             model: match[1],
             depth: match[2] ? parseInt(match[2], 10) : undefined
         };

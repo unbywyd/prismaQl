@@ -1,15 +1,16 @@
 #!/usr/bin/env node
+
 import { program } from 'commander'
-import "./utils/handlers.js";
-import { loadQueryManager } from './utils/ast.js';
-import { loadPrismaSchema } from './utils/load-prisma-schema.js';
-import { validatePrismaSchema } from './utils/prisma-validation.js';
+import { loadPrismaSchema } from './modules/load-prisma-schema.js';
+import { validatePrismaSchema } from './modules/prisma-validation.js';
+import loadQueryRenderManager from './modules/cli-provider.js';
+
 program
   .command('query <text>')
   .description('Query the schema')
   .action(async (text) => {
     try {
-      loadQueryManager().then(async query => {
+      loadQueryRenderManager().then(async query => {
         const result = await query(text);
         console.log(result);
       });

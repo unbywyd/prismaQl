@@ -49,7 +49,7 @@ export type QueryCommand = {
 } | {
     type: "GET_ENUM_NAMES";
 } | {
-    type: "GET_RELATION_TREE";
+    type: "GET_RELATION_LIST";
     model: string;
     depth?: number;
 };

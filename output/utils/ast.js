@@ -1,52 +1,46 @@
-import fs from "fs";
-import fsx from "fs-extra";
-import path from "path";
-import { getSchema, createPrismaSchemaBuilder } from "@mrleebo/prisma-ast";
 import { validatePrismaSchema } from "./prisma-validation.js";
-import readline from "readline";
-import { MutationCommandTypes, parseCommand, QueryCommandTypes } from "./dsl.js";
+import { parseCommand } from "./dsl.js";
 import { enumsToSchema, fieldsToSchema, modelsToSchema, relationsToSchema } from "./renders.js";
-import { loadPrismaSchema } from "./load-prisma-schema.js";
-import { generateRelationTree } from "./relations.js";
+import relationLogger from "./relation-logger.js";
+import PrismaSchemaManager from "./manager.js";
 export const provideQueryRenderHandlers = (instance) => {
-    instance.registerCommandHandler("GET_MODEL_NAMES", async (builder) => {
-        const schema = builder.print({ sort: true });
-        const parsedSchema = getSchema(schema);
+    instance.registerCommandHandler("GET_MODEL_NAMES", async (prismaData) => {
+        const { parsedSchema } = prismaData;
         const models = parsedSchema.list
             .filter(item => item.type === "model")
             .map(model => model.name);
         return models;
     });
-    instance.registerCommandHandler("GET_RELATION_TREE", async (builder, command) => {
-        const schema = builder.print({ sort: true });
-        const parsedSchema = getSchema(schema);
+    instance.registerCommandHandler("GET_RELATION_LIST", async (prismaData, command, manager) => {
+        const { parsedSchema } = prismaData;
         const models = parsedSchema.list?.filter(item => item.type === "model");
         if (!models) {
             throw new Error("No models found in schema.");
         }
         try {
-            return await generateRelationTree(command.model, builder, command?.depth || 3);
+            const log = relationLogger.generateRelationTreeLog(command.model, command?.depth || 3, manager.getRelations());
+            return log;
         }
         catch (error) {
             console.error("Error generating relation tree:", error.message);
         }
     });
-    instance.registerCommandHandler("GET_MODELS", async (builder) => {
-        const schema = builder.print({ sort: true });
-        const parsedSchema = getSchema(schema);
+    instance.registerCommandHandler("GET_MODELS", async (prismaData) => {
+        const { parsedSchema } = prismaData;
         const models = parsedSchema.list
             .filter(item => item.type === "model")
             .map(model => model);
         return modelsToSchema(models);
     });
-    instance.registerCommandHandler("GET_MODEL", async (builder, command) => {
+    instance.registerCommandHandler("GET_MODEL", async (prismaData, command) => {
+        const builder = prismaData.builder;
         const model = builder.findByType("model", { name: command.model });
         if (!model) {
             throw new Error(`Model "${command.model}" not found.`);
         }
         return modelsToSchema([model]);
     });
-    instance.registerCommandHandler("GET_FIELD", async (builder, command) => {
+    instance.registerCommandHandler("GET_FIELD", async ({ builder }, command) => {
         const model = builder.findByType("model", { name: command.model });
         if (!model) {
             throw new Error(`Model "${command.model}" not found.`);
@@ -64,38 +58,33 @@ export const provideQueryRenderHandlers = (instance) => {
         }
         return fieldsToSchema(model, [field]);
     });
-    instance.registerCommandHandler("GET_RELATIONS", async (builder, command) => {
+    instance.registerCommandHandler("GET_RELATIONS", async ({ builder }, command) => {
         const model = builder.findByType("model", { name: command.model });
         if (!model) {
             throw new Error(`Model "${command.model}" not found.`);
         }
         return relationsToSchema(model, builder);
     });
-    instance.registerCommandHandler("GET_ENUM_NAMES", async (builder, command) => {
-        const schema = builder.print({ sort: true });
-        const parsedSchema = getSchema(schema);
+    instance.registerCommandHandler("GET_ENUM_NAMES", async ({ parsedSchema }, command) => {
         const enums = parsedSchema.list
             .filter(item => item.type === "enum")
             .map(enumItem => enumItem.name);
         return enums;
     });
-    instance.registerCommandHandler("GET_ENUMS", async (builder) => {
-        const schema = builder.print({ sort: true });
-        const parsedSchema = getSchema(schema);
+    instance.registerCommandHandler("GET_ENUMS", async ({ parsedSchema }) => {
         const enums = parsedSchema.list
             .filter(item => item.type === "enum")
             .map(enumItem => enumItem);
         return enumsToSchema(enums);
     });
-    instance.registerCommandHandler("GET_ENUM", async (builder, command) => {
+    instance.registerCommandHandler("GET_ENUM", async ({ builder }, command) => {
         const enumItem = builder.findByType("enum", { name: command.enum });
         if (!enumItem) {
             throw new Error(`Enum "${command.enum}" not found.`);
         }
         return enumsToSchema([enumItem]);
     });
-    instance.registerCommandHandler("VALIDATE_SCHEMA", async (builder, command, manager) => {
-        const schema = builder.print({ sort: true });
+    instance.registerCommandHandler("VALIDATE_SCHEMA", async ({ schema }, command, manager) => {
         const result = await validatePrismaSchema(schema);
         if (result instanceof Error) {
             return `❌ Schema is invalid: ${result.message}`;
@@ -104,224 +93,10 @@ export const provideQueryRenderHandlers = (instance) => {
             return "✅ Schema is valid.";
         }
     });
-    instance.registerCommandHandler("PRINT", async (builder) => {
-        const formattedSchema = builder.print({ sort: true });
-        return formattedSchema;
+    instance.registerCommandHandler("PRINT", async ({ builder, schema }) => {
+        return schema;
     });
 };
-export class PrismaSchemaManager {
-    cachedSchema = null;
-    /**
-     * Command handler registry - maps command types to their respective handlers.
-     */
-    commandHandlers = {};
-    /**
-     * Registers a new command handler.
-     * @param type - The command type to handle.
-     * @param handler - The function that processes the command.
-     */
-    registerCommandHandler(type, handler) {
-        if (this.commandHandlers[type]) {
-            throw new Error(`Handler for command "${type}" is already registered.`);
-        }
-        this.commandHandlers[type] = handler;
-    }
-    /**
-     * Executes a given command by finding and calling the appropriate handler.
-     * @param command - The parsed command object.
-     * @returns Promise resolving with the handler result.
-     * @throws If no handler is registered for the command type.
-     */
-    async executeCommand(builder, command) {
-        const handler = this.commandHandlers[command.type];
-        if (!handler) {
-            throw new Error(`No handler registered for command type: "${command.type}"`);
-        }
-        return handler(builder, command, this);
-    }
-    // Store pending modifications
-    successfulModifications = [];
-    async loadFromFile(filePath, forceReload = false) {
-        if (this.cachedSchema && !forceReload) {
-            return this.cachedSchema;
-        }
-        const { schema, path } = await loadPrismaSchema(filePath);
-        return this.prepareSchema(schema, path);
-    }
-    async prepareSchema(schemaContent, schemaPath) {
-        const isValid = await this.isValid(schemaContent);
-        if (isValid instanceof Error) {
-            throw isValid;
-        }
-        const parsedSchema = getSchema(schemaContent);
-        const builder = createPrismaSchemaBuilder(schemaContent);
-        this.cachedSchema = { schemaPath: schemaPath || '', schemaContent, parsedSchema, builder };
-        return this.cachedSchema;
-    }
-    loadFromText(schemaContent) {
-        return this.prepareSchema(schemaContent);
-    }
-    async getSchema() {
-        if (!this.cachedSchema) {
-            await this.loadFromFile();
-        }
-        return this.cachedSchema;
-    }
-    clearCache() {
-        if (this.cachedSchema && this.cachedSchema.schemaPath) {
-            this.loadFromFile(this.cachedSchema.schemaPath, true);
-        }
-        else {
-            throw new Error('No schema loaded to reload.');
-        }
-    }
-    query(command) {
-        if (!this.cachedSchema) {
-            throw new Error("No schema loaded.");
-        }
-        if (!QueryCommandTypes.includes(command.type)) {
-            throw new Error(`Invalid command type: ${command.type}`);
-        }
-        return this.executeCommand(this.cachedSchema.builder, command);
-    }
-    /**
-     * Apply a modification to the schema builder and track it.
-     * @param {Command} command - The command to modify the schema.
-     */
-    async applyModification(command) {
-        if (!this.cachedSchema) {
-            throw new Error("No schema loaded.");
-        }
-        if (!MutationCommandTypes.includes(command.type)) {
-            throw new Error(`Invalid command type: ${command.type}`);
-        }
-        const currentSchema = this.cachedSchema.builder.print({ sort: true });
-        const isValid = await validatePrismaSchema(currentSchema);
-        if (isValid instanceof Error) {
-            throw new Error('Cannot apply modification to invalid schema. Please fix the schema before applying modifications.');
-        }
-        const cloneBuilder = createPrismaSchemaBuilder(currentSchema);
-        try {
-            await this.executeCommand(cloneBuilder, command);
-        }
-        catch (e) {
-            throw new Error(`Modification failed: ${e.message}`);
-        }
-        const updatedSchema = cloneBuilder.print({ sort: true });
-        const validation = await validatePrismaSchema(updatedSchema);
-        if (validation instanceof Error) {
-            throw new Error(`Modification failed: ${validation.message}`);
-        }
-        try {
-            await this.executeCommand(this.cachedSchema?.builder, command);
-        }
-        catch (e) {
-            throw new Error(`Modification failed: ${e.message}`);
-        }
-        // Store modification for review
-        this.successfulModifications.push(command);
-        console.log(`✅ Modification applied: ${command.type} ${"model" in command ? command.model : ""}`);
-    }
-    /**
-     * Ask the user if they want to apply the modifications before saving.
-     */
-    async confirmAndSave(sourcePath) {
-        if (this.successfulModifications.length === 0) {
-            console.log("✅ No pending modifications. Saving directly.");
-            return this.save(sourcePath);
-        }
-        console.log("⚠️ Pending Modifications:");
-        this.successfulModifications.forEach((cmd, index) => {
-            console.log(`${index + 1}. ${cmd.type} ${"model" in cmd ? cmd.model : ""}`);
-        });
-        const userConfirmed = await this.askUser("Apply pending modifications before saving? (y/n): ");
-        if (userConfirmed) {
-            console.log("✅ Applying modifications...");
-            this.successfulModifications = []; // Clear modifications after applying
-        }
-        else {
-            console.log("❌ Modifications discarded. Schema remains unchanged.");
-        }
-        this.save(sourcePath);
-    }
-    async askUser(question) {
-        return new Promise((resolve) => {
-            const rl = readline.createInterface({
-                input: process.stdin,
-                output: process.stdout
-            });
-            rl.question(question, (answer) => {
-                rl.close();
-                resolve(answer.trim().toLowerCase() === "y");
-            });
-        });
-    }
-    save(sourcePath) {
-        if (!this.cachedSchema) {
-            throw new Error('No schema loaded to save. Please load a schema first.');
-        }
-        let outputPath = sourcePath;
-        if (sourcePath && !path.isAbsolute(sourcePath)) {
-            outputPath = path.join(process.cwd(), sourcePath);
-        }
-        if (!this.cachedSchema?.schemaPath && !outputPath) {
-            throw new Error('Cannot save schema without a path, please provide a path!');
-        }
-        try {
-            this.check();
-        }
-        catch (e) {
-            throw new Error('Cannot save invalid schema. Please fix the schema before saving.');
-        }
-        const finalPath = outputPath || this.cachedSchema.schemaPath;
-        // ✅ Generate timestamped backup
-        if (fs.existsSync(finalPath)) {
-            const backupDir = path.join(path.dirname(finalPath), ".prisma", "backups");
-            fsx.ensureDirSync(backupDir);
-            const backupPath = path.join(backupDir, `${path.basename(finalPath)}_${new Date().toISOString().replace(/[:.]/g, "-")}.bak.prisma`);
-            fsx.copyFileSync(finalPath, backupPath);
-        }
-        // ✅ Print the schema using builder (formatted output)
-        const updatedSchemaContent = this.cachedSchema.builder.print({ sort: true });
-        // ✅ Save schema
-        fs.writeFileSync(finalPath, updatedSchemaContent, "utf-8");
-        console.log(`✅ Schema saved successfully to ${finalPath}`);
-    }
-    print() {
-        if (!this.cachedSchema) {
-            throw new Error("No schema loaded.");
-        }
-        console.log(this.cachedSchema.builder.print({ sort: true }));
-    }
-    lastValidatedSchema = null;
-    async isValid(sourceSchema) {
-        if (!sourceSchema && !this.cachedSchema) {
-            throw new Error("No schema loaded.");
-        }
-        const schemaContent = sourceSchema || this.cachedSchema?.builder.print({ sort: true });
-        if (!schemaContent) {
-            return new Error("No schema content provided.");
-        }
-        if (this.lastValidatedSchema === schemaContent) {
-            return true;
-        }
-        const validation = await validatePrismaSchema(schemaContent);
-        if (validation === true) {
-            this.lastValidatedSchema = schemaContent;
-        }
-        else {
-            this.lastValidatedSchema = null;
-        }
-        return validation;
-    }
-    check() {
-        if (!this.cachedSchema) {
-            throw new Error("No schema loaded.");
-        }
-        this.isValid();
-    }
-}
-export default PrismaSchemaManager;
 export const loadQueryManager = async () => {
     const manager = new PrismaSchemaManager();
     provideQueryRenderHandlers(manager);

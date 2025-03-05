@@ -1,3 +1,3 @@
 #!/usr/bin/env node
-import "./utils/handlers.js";
+export {};
 //# sourceMappingURL=index.d.ts.map

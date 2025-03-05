@@ -1,4 +1,5 @@
 import { Break, Comment, createPrismaSchemaBuilder, Enum, Model, Property } from "@mrleebo/prisma-ast";
+export declare const getModels: (models: Model[]) => string;
 export declare const modelsToSchema: (models: Model[]) => string;
 /**
  * Converts model relations to Prisma syntax.

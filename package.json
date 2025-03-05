@@ -1,5 +1,5 @@
 {
-  "name": "prismorf",
+  "name": "prismaql",
   "description": "",
   "version": "0.0.1-alpha.1",
   "main": "output/index.js",
@@ -10,64 +10,47 @@
     "access": "public"
   },
   "bin": {
-    "prismorf": "./output/index.js"
+    "prismaql": "./output/index.js"
   },
   "scripts": {
-    "build": "tsc && npm run copy-files",
-    "dev": "tsc -w",
-    "copy-files": "cpy \"cpy/**/*\" \"output/\" --parents"
+    "build": "tsc",
+    "dev": "tsc -w"
   },
   "author": {
     "name": "Artyom Gorlovetskiy",
     "url": "https://github.com/unbywyd",
     "email": "unbywyd@gmail.com"
   },
-  "engines": {
-    "node": ">=18.19.0"
-  },
   "keywords": [],
   "license": "MIT",
   "dependencies": {
     "@mrleebo/prisma-ast": "^0.12.1",
     "@prisma/internals": "^6.4.1",
-    "@types/figlet": "^1.7.0",
-    "@types/qs": "^6.9.18",
     "@types/treeify": "^1.0.3",
     "ajv": "^8.17.1",
     "boxen": "^8.0.1",
-    "case-anything": "^3.1.2",
     "chalk": "^4.1.2",
-    "change-case": "^5.4.4",
     "commander": "^13.1.0",
-    "cpy-cli": "^5.0.0",
-    "figlet": "^1.8.0",
     "fs-extra": "^11.3.0",
-    "glob": "^11.0.1",
-    "gradient-string": "^3.0.0",
     "inquirer": "^12.3.2",
-    "jexl": "^2.3.0",
-    "node-fetch": "^2.7.0",
-    "ora": "^5.4.1",
     "pluralize": "^8.0.0",
-    "qs": "^6.14.0",
+    "prismalux": "^0.1.3",
     "treeify": "^1.1.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
-    "@types/jexl": "^2.3.4",
     "@types/node": "^22.10.10",
-    "@types/node-fetch": "^2.6.12",
     "@types/pluralize": "^0.0.33",
     "typescript": "^5.7.2"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/unbywyd/tsdiapi-cli.git"
+    "url": "git+https://github.com/unbywyd/prismaql.git"
   },
   "bugs": {
-    "url": "https://github.com/unbywyd/tsdiapi-cli/issues"
+    "url": "https://github.com/unbywyd/prismaql/issues"
   },
-  "homepage": "https://github.com/unbywyd/tsdiapi-cli#readme",
+  "homepage": "https://github.com/unbywyd/prismaql#readme",
   "files": [
     "output/",
     "README.md",

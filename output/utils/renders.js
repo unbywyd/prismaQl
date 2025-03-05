@@ -1,10 +1,32 @@
 import { printSchema } from "@mrleebo/prisma-ast";
+import { PrismaHighlighter } from "prismalux";
+import chalk from "chalk";
+import boxen from "boxen";
+const highlightPrismaSchema = new PrismaHighlighter();
+export const getModels = (models) => {
+    if (models.length === 0) {
+        return chalk.red.bold("❌ No models in Prisma schema.");
+    }
+    // Statistics
+    const stats = `${chalk.cyan("📊 Total models:")} ${chalk.green.bold(models.length)}`;
+    // Nicely format the list of models
+    const formattedModels = models.map(model => `${chalk.hex("#BE5CF6")("•")} ${chalk.bold(model.name)}`).join("\n");
+    // Final output in a box
+    return boxen(`${stats}\n\n${formattedModels}`, {
+        padding: 1,
+        margin: 1,
+        borderStyle: "round",
+        borderColor: "cyan",
+        title: "Prisma Models",
+        titleAlignment: "center"
+    });
+};
 export const modelsToSchema = (models) => {
     const schema = {
         type: 'schema',
         list: models
     };
-    return printSchema(schema);
+    return highlightPrismaSchema.highlight(printSchema(schema));
 };
 /**
  * Converts model relations to Prisma syntax.
@@ -38,7 +60,6 @@ export const enumsToSchema = (enumItems) => {
     return printSchema(schema);
 };
 export const fieldsToSchema = (model, fields) => {
-    // Создаим временную моедль на основе переданной модели и добавим только эти поля и отрендерим 
     const tempSchema = {
         type: 'schema',
         list: [{
@@ -47,6 +68,6 @@ export const fieldsToSchema = (model, fields) => {
                 properties: fields
             }]
     };
-    return printSchema(tempSchema);
+    return highlightPrismaSchema.highlight(printSchema(tempSchema));
 };
 //# sourceMappingURL=renders.js.map
