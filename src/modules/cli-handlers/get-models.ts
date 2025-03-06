@@ -1,12 +1,13 @@
 import { printSchema, Schema } from "@mrleebo/prisma-ast";
-import { Handler } from "../handler-registries/handler-registry.js"
+import { Handler, handlerResponse } from "../handler-registries/handler-registry.js"
 import { useHelper } from "../schema-helper.js";
 import boxen from "boxen";
 import { PrismaHighlighter } from "prismalux";
 import chalk from "chalk";
 const highlightPrismaSchema = new PrismaHighlighter();
-export const getModels: Handler<"GET", "MODELS"> = (prismaState, args) => {
-
+export const getModels: Handler<"GET", "MODELS", 'query'> = (prismaState, data) => {
+    const response = handlerResponse(data);
+    const { args } = data;
     const models = useHelper(prismaState).getModels(args?.models);
 
     const schema: Schema = {
@@ -35,5 +36,5 @@ ${highlightedSchema}
         align: "left"
     });
 
-    return statsBox
+    return response.result(statsBox)
 }

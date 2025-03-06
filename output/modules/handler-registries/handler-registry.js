@@ -1,3 +1,15 @@
+export const handlerResponse = (dsl) => {
+    return {
+        error: (error) => {
+            return { dsl, error };
+        },
+        result: (result) => {
+            return {
+                dsl, result
+            };
+        }
+    };
+};
 export class HandlerRegistry {
     handlers = {};
     constructor(initialHandlers) {
@@ -5,15 +17,15 @@ export class HandlerRegistry {
             this.handlers = { ...initialHandlers };
         }
     }
-    register(command, handler) {
-        this.handlers[command] = handler;
+    register(action, command, handler) {
+        this.handlers[action + '_' + command] = handler;
     }
-    execute(command, prismaState, args, options) {
-        const handler = this.handlers[command];
+    execute(action, command, prismaState, dsl) {
+        const handler = this.handlers[action + '_' + command];
         if (!handler) {
             throw new Error(`Handler for command "${command}" not found.`);
         }
-        return handler(prismaState, args, options);
+        return handler(prismaState, dsl);
     }
 }
 //# sourceMappingURL=handler-registry.js.map

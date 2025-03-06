@@ -41,7 +41,7 @@ export class PrismaSchemaLoader {
         }
         const parsedSchema = getSchema(sourcePrismaSchema);
         const builder = createPrismaSchemaBuilder(sourcePrismaSchema);
-        this.setPrismaState({ schemaPath: schemaPath || '', schema: sourcePrismaSchema, parsedSchema, builder, relations: this.relationCollector.getRelations() });
+        this.setPrismaState({ schemaPath: schemaPath || '', schema: sourcePrismaSchema, ast: parsedSchema, builder, relations: this.relationCollector.getRelations() });
         await this.collectRelations();
         return this.prismaState;
     }
@@ -65,7 +65,7 @@ export class PrismaSchemaLoader {
         const { schema: sourcePrismaSchema, schemaPath } = this.prismaState;
         const cloneBuilder = createPrismaSchemaBuilder(sourcePrismaSchema);
         const parsedSchema = getSchema(sourcePrismaSchema);
-        return { schemaPath, schema: sourcePrismaSchema, parsedSchema, builder: cloneBuilder, relations: this.relationCollector.getRelations() };
+        return { schemaPath, schema: sourcePrismaSchema, ast: parsedSchema, builder: cloneBuilder, relations: this.relationCollector.getRelations() };
     }
     save(commits, sourcePath) {
         if (!this.prismaState) {

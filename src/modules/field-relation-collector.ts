@@ -233,12 +233,7 @@ export class PrismaRelationCollector {
         return relations;
     }
     private getManyToManyTableName(modelA: string, modelB: string, relationName?: string): string {
-        // If the relation is explicit (relationName is set), use it
-        if (relationName) return relationName;
-
-        // In implicit M:N relations, Prisma automatically names tables as _ModelAToModelB (in alphabetical order)
-        const [first, second] = [modelA, modelB].sort();
-        return `_${first}To${second}`;
+        return getManyToManyTableName(modelA, modelB, relationName);
     }
     detectManyToManyRelations(models: Model[]): Relation[] {
         const relations: Relation[] = [];
@@ -480,4 +475,13 @@ export class PrismaRelationCollector {
         const relations = this.collectRelations(models);
         this.relations = await relations;
     }
+}
+
+export const getManyToManyTableName = (modelA: string, modelB: string, relationName?: string) => {
+    // If the relation is explicit (relationName is set), use it
+    if (relationName) return relationName;
+
+    // In implicit M:N relations, Prisma automatically names tables as _ModelAToModelB (in alphabetical order)
+    const [first, second] = [modelA, modelB].sort();
+    return `_${first}To${second}`;
 }

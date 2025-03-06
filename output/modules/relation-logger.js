@@ -1,7 +1,7 @@
 import treeify from "treeify";
 import chalk from 'chalk';
 import boxen from 'boxen';
-import { PrismaRelationCollector } from "./relation-collector.js";
+import { PrismaRelationCollector } from "./field-relation-collector.js";
 import pkg from '@prisma/internals';
 const { getDMMF } = pkg;
 import fs from 'fs';
@@ -10,6 +10,11 @@ export class RelationLogger {
     relations;
     setRelations(relations) {
         this.relations = relations;
+    }
+    constructor(relations) {
+        if (relations) {
+            this.setRelations(relations);
+        }
     }
     buildModelTrees(rootModel, relations, maxDepth, depth = 0, visitedModels = new Set()) {
         if (depth > maxDepth || visitedModels.has(rootModel))
@@ -90,10 +95,12 @@ export class RelationLogger {
             maxDepth // Depth passed from outside
         };
     }
-    collectRelationStatistics(models, relations, maxDepth) {
+    collectRelationStatistics(models, relations, rootModel, maxDepth) {
+        const directRelations = rootModel ? [...relations].filter(r => r.startsWith(rootModel)) : [...relations];
         return {
             uniqueModels: models.size,
             totalRelations: relations.size,
+            directRelations: directRelations.length,
             maxDepth
         };
     }
@@ -123,18 +130,24 @@ export class RelationLogger {
         }
         const { models, relations: rels, trees } = this.buildModelTrees(rootModel, this.relations, maxDepth);
         // Collect statistics
-        const stats = this.collectRelationStatistics(models, rels, maxDepth);
+        const stats = this.collectRelationStatistics(models, rels, rootModel, maxDepth);
         let output = `${chalk.green.bold('📊 Relation Tree Statistics')}\n`;
         output += `${chalk.yellow('Model:')} ${chalk.bold(rootModel)}\n`;
         output += `${chalk.cyan('Max Depth:')} ${chalk.bold(maxDepth)}\n`;
-        output += `${chalk.blue('Unique Related Models:')} ${chalk.bold(stats.uniqueModels)}\n`;
-        output += `${chalk.magenta('Total Relations Count:')} ${chalk.bold(stats.totalRelations)}\n\n`;
+        output += `${chalk.blue('Related Models:')} ${chalk.bold(stats.uniqueModels)}\n`;
+        output += `${chalk.magenta('Total Relations:')} ${chalk.bold(stats.totalRelations)}\n`;
+        output += `${chalk.redBright('Direct Relations:')} ${chalk.bold(stats.directRelations)}\n`;
+        // direct relations
         let treeOutput = '';
         for (const tree of trees) {
             treeOutput += treeify.asTree(tree, true, true) + '\n';
         }
+        const results = [...rels.values()].filter(el => {
+            return el.startsWith(rootModel) || el.endsWith(rootModel);
+        }).map(r => chalk.gray(r)).join('\n');
+        const relsList = `${chalk.white.bold('🔗 Direct Relations')}\n${results}`;
         // Output statistics + tree, without extra spaces
-        return boxen(output.trim() + '\n' + treeOutput.trim(), {
+        return boxen(output.trim() + '\n' + treeOutput.trim() + `\n\n${relsList}`, {
             padding: 1,
             borderColor: 'green',
             borderStyle: 'round'

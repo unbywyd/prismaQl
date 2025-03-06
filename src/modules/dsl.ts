@@ -1,3 +1,5 @@
+import { RelationType } from "./field-relation-collector.js";
+
 export type DSLAction = "GET" | "ADD" | "DELETE" | "UPDATE" | "PRINT" | "VALIDATE";
 
 export type DSLCommand =
@@ -6,35 +8,57 @@ export type DSLCommand =
     | "FIELD"
     | "FIELDS"
     | "RELATIONS"
-    | "RELATION_FIELDS"
+    | "ENUM_RELATIONS"
     | "ENUMS"
     | "ENUM"
-    | "MODEL_NAMES"
-    | "ENUM_NAMES"
+    | "MODELS_LIST"
     | "RELATION";
 
 export type DSLType = "query" | "mutation";
 
-export type MutationAction = "ADD" | "DELETE" | "UPDATE";
-export type QueryAction = "GET" | "PRINT" | "VALIDATE";
+export type DSLMutationAction = "ADD" | "DELETE" | "UPDATE";
+export type DSLQueryAction = "GET" | "PRINT" | "VALIDATE";
 
 export type DSLArgs<A extends DSLAction, C extends DSLCommand | undefined> = {
     models?: string[];
     fields?: string[];
-    relations?: string[];
     enums?: string[];
 };
 
-export type DSLOptions<A extends DSLAction, C extends DSLCommand | undefined> = Record<string, string | number | boolean>;
+export type DSLPrismaRelationType = RelationType;
 
-export interface ParsedDSL<A extends DSLAction, C extends DSLCommand | undefined> {
+export type DSLOptionMap = {
+    GET: {
+        ENUMS: { raw?: boolean };
+        RELATIONS: { depth?: number };
+    },
+    ADD: {
+        RELATION: {
+            type: DSLPrismaRelationType,
+            pivotTable?: string,
+            fkHolder?: string,
+            required?: boolean,
+            relationName?: string,
+        };
+    }
+};
+
+export type DSLOptions<A extends DSLAction, C extends DSLCommand | undefined> =
+    A extends keyof DSLOptionMap
+    ? C extends keyof DSLOptionMap[A]
+    ? DSLOptionMap[A][C]
+    : Record<string, string | number | boolean>
+    : Record<string, string | number | boolean>;
+
+
+export interface ParsedDSL<A extends DSLAction, C extends DSLCommand | undefined, T extends DSLType> {
     action: A;
     command?: C;
     args?: DSLArgs<A, C>;
     options?: DSLOptions<A, C>;
     prismaBlock?: string;
     raw: string;
-    type: DSLType;
+    type: T;
 }
 
 export type DSLArgsProcessor<A extends DSLAction, C extends DSLCommand | undefined> = (
@@ -42,7 +66,7 @@ export type DSLArgsProcessor<A extends DSLAction, C extends DSLCommand | undefin
     rawArgs: string | undefined
 ) => DSLArgs<A, C>;
 
-const DSL_PATTERN = /^([A-Z]+)(?:\s+([A-Z_]+))?(?:\s+([\w\s,]+))?(?:\s*\(([^)]*?)\))?(?:\s*\{([\s\S]*)\})?$/i;
+const DSL_PATTERN = /^([A-Z]+)(?:\s+([A-Z_]+))?(?:\s+([\w\s,*]+))?(?:\s*\(\{([\s\S]*?)\}\))?(?:\s*\(([^)]*?)\))?$/i;
 
 const ACTION_TYPE_MAP: Record<DSLAction, DSLType> = {
     GET: "query",
@@ -50,11 +74,11 @@ const ACTION_TYPE_MAP: Record<DSLAction, DSLType> = {
     DELETE: "mutation",
     UPDATE: "mutation",
     PRINT: "query",
-    VALIDATE: "query",
+    VALIDATE: "query"
 };
 
 const ACTION_COMMAND_MAP: Record<DSLAction, DSLCommand[]> = {
-    GET: ["MODELS", "MODEL", "FIELDS", "RELATIONS", "RELATION_FIELDS", "ENUMS", "ENUM", "MODEL_NAMES", "ENUM_NAMES"],
+    GET: ["MODELS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
     ADD: ["MODEL", "FIELD", "RELATION", "ENUM"],
     DELETE: ["MODEL", "FIELD", "RELATION", "ENUM"],
     UPDATE: ["FIELD"],
@@ -70,7 +94,7 @@ export class DslParser {
         >
     ) {
     }
-    public parseCommand<A extends DSLAction, C extends DSLCommand | undefined>(input: string): ParsedDSL<A, C> {
+    public parseCommand<A extends DSLAction, C extends DSLCommand | undefined, T extends DSLType>(input: string): ParsedDSL<A, C, T> {
         const trimmed = input.trim();
         if (!trimmed.endsWith(";")) {
             throw new Error("DSL command must end with a semicolon.");
@@ -85,9 +109,14 @@ export class DslParser {
         const actionStr = match[1].toUpperCase() as DSLAction;
         const commandStr = match[2]?.toUpperCase() as DSLCommand | undefined;
         const argsStr = match[3]?.trim() || undefined;
-        const optionsStr = match[4]?.trim() || undefined;
-        const prismaBlockStr = match[5]?.trim() || undefined;
-
+        let prismaBlockStr = match[4]?.trim() || undefined;
+        if (prismaBlockStr) {
+            prismaBlockStr = prismaBlockStr.replace(/'/g, '"');
+            prismaBlockStr = prismaBlockStr.replace(/'/g, '"');
+            prismaBlockStr = prismaBlockStr.replace(/\\n/g, "\n");
+            prismaBlockStr = prismaBlockStr.replace(/\|/g, "\n");
+        }
+        const optionsStr = match[5]?.trim() || undefined;
         if (!(actionStr in ACTION_COMMAND_MAP)) {
             throw new Error(`Unsupported action "${actionStr}". Supported actions: ${Object.keys(ACTION_COMMAND_MAP).join(", ")}`);
         }
@@ -112,7 +141,7 @@ export class DslParser {
             options: parsedOptions,
             prismaBlock: prismaBlockStr,
             raw,
-            type: ACTION_TYPE_MAP[actionStr],
+            type: ACTION_TYPE_MAP[actionStr] as T,
         };
     }
     parseParams(input: string): DSLOptions<any, any> {
@@ -121,15 +150,21 @@ export class DslParser {
         for (const token of tokens) {
             const eqIndex = token.indexOf("=");
             if (eqIndex > 0) {
-                const key = token.slice(0, eqIndex).trim().toUpperCase();
+                const key = token.slice(0, eqIndex).trim();
                 let valueStr = token.slice(eqIndex + 1).trim();
                 if (/^\d+$/.test(valueStr)) {
                     result[key] = parseInt(valueStr, 10);
-                } else {
+                } if (valueStr === "true") {
+                    result[key] = true;
+                }
+                else if (valueStr === "false") {
+                    result[key] = false;
+                }
+                else {
                     result[key] = valueStr;
                 }
             } else {
-                const flag = token.trim().toUpperCase();
+                const flag = token.trim();
                 result[flag] = true;
             }
         }
@@ -165,18 +200,67 @@ const instance = new DslParser({
             }
             return parsedArgs;
         },
+        MODELS: (parsedArgs, rawArgs) => {
+            return { models: rawArgs ? rawArgs.split(",").map(m => m.trim()) : [] };
+        },
+        RELATIONS: (parsedArgs, rawArgs) => {
+            return { models: rawArgs ? rawArgs.split(",").map(r => r.trim()) : [] };
+        },
+        FIELDS: (parsedArgs, rawArgs) => {
+            const [fieldsStr, modelName] = rawArgs?.split("IN") || [];
+            if (!fieldsStr || !modelName) return parsedArgs;
+            return { models: [modelName.trim()], fields: fieldsStr.split(",").map(f => f.trim()) };
+        },
+        ENUMS: (parsedArgs, rawArgs) => {
+            return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
+        },
+        ENUM_RELATIONS: (parsedArgs, rawArgs) => {
+            return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
+        }
     },
     ADD: {
         default: (parsedArgs, rawArgs) => parsedArgs,
         MODEL: (parsedArgs, rawArgs) => {
             return { models: rawArgs ? rawArgs.split(",").map(m => m.trim()) : [] };
         },
+        ENUM: (parsedArgs, rawArgs) => {
+            return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
+        },
+        FIELD: (parsedArgs, rawArgs) => {
+            const [fieldName, modelName, fieldArgs] = rawArgs?.split("TO") || [];
+            if (!fieldName || !modelName) return parsedArgs;
+            return { models: [modelName.trim()], fields: [fieldName.trim()] };
+        },
+        RELATION: (parsedArgs, rawArgs) => {
+            const [fromModel, toModel] = rawArgs?.split("TO") || [];
+            if (!fromModel || !toModel) return parsedArgs;
+            return { models: [fromModel.trim(), toModel.trim()] };
+        }
     },
     DELETE: {
         default: (parsedArgs, rawArgs) => parsedArgs,
+        MODEL: (parsedArgs, rawArgs) => {
+            return { models: rawArgs ? rawArgs.split(",").map(m => m.trim()) : [] };
+        },
+        ENUM: (parsedArgs, rawArgs) => {
+            return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
+        },
+        FIELD: (parsedArgs, rawArgs) => {
+            const [fieldName, modelName] = rawArgs?.split("IN") || [];
+            if (!fieldName || !modelName) return parsedArgs;
+            return { models: [modelName.trim()], fields: [fieldName.trim()] };
+        }
     },
     UPDATE: {
         default: (parsedArgs, rawArgs) => parsedArgs,
+        FIELD: (parsedArgs, rawArgs) => {
+            const [fieldName, modelName, prismaBlock] = rawArgs?.split("IN") || [];
+            if (!fieldName || !modelName) return parsedArgs;
+            return {
+                models: [modelName.trim()], fields: [fieldName
+                    .trim()], prismaBlock: prismaBlock?.trim()
+            };
+        }
     },
     PRINT: {
         default: (parsedArgs, rawArgs) => parsedArgs,

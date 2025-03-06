@@ -1,0 +1,1 @@
+{"version":3,"file":"enum-relations.js","sourceRoot":"","sources":["../../src/modules/enum-relations.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,SAAS,EAAE,MAAM,oBAAoB,CAAC;AAG/C,MAAM,CAAC,MAAM,gBAAgB,GAAG,CAAC,QAAgB,EAAE,WAA6B,EAAkB,EAAE;IAChG,MAAM,MAAM,GAAG,SAAS,CAAC,WAAW,CAAC,CAAC;IACtC,MAAM,MAAM,GAAG,MAAM,CAAC,SAAS,EAAE,CAAC;AACtC,CAAC,CAAA"}

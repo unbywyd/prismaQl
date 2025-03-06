@@ -6,18 +6,37 @@ import { validatePrismaSchema } from './modules/prisma-validation.js';
 import loadQueryRenderManager from './modules/cli-provider.js';
 
 program
-  .command('query <text>')
+  .command('ql <text>')
   .description('Query the schema')
   .action(async (text) => {
     try {
       loadQueryRenderManager().then(async query => {
-        const result = await query(text);
+        await query(text);
+      });
+    } catch (error) {
+      console.error("Error parsing command:", error.message);
+    }
+  })
+
+
+program
+  .command('test')
+  .description('Query the schema')
+  .action(async (text) => {
+    try {
+      loadQueryRenderManager().then(async query => {
+
+        // ADD FIELD testAt IN User ({DateTime? @default(now())});
+        const result = await query(`ADD FIELD test TO Session ({DateTime? @default(now())});`);
         console.log(result);
       });
     } catch (error) {
       console.error("Error parsing command:", error.message);
     }
   })
+
+
+
 
 program
   .command('validate [schemaPath]')

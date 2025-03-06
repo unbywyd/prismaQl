@@ -1,9 +1,9 @@
-import { DSLArgs, DSLCommand, DSLOptions, QueryAction } from "../dsl.js";
+import { DSLArgs, DSLCommand, DSLOptions, DSLQueryAction } from "../dsl.js";
 import { Handler, HandlerRegistry } from "./handler-registry.js";
 
-export class QueryHandlerRegistry extends HandlerRegistry<QueryAction, DSLCommand> {
+export class QueryHandlerRegistry extends HandlerRegistry<DSLQueryAction, DSLCommand, 'query'> {
     constructor(
-        initialHandlers?: Record<string, Handler<QueryAction, DSLCommand>>,
+        initialHandlers?: Record<string, Handler<DSLQueryAction, DSLCommand, 'query'>>,
     ) {
         super(initialHandlers);
     }

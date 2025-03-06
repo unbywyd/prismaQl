@@ -1,9 +1,9 @@
 import { getSchema, createPrismaSchemaBuilder } from "@mrleebo/prisma-ast";
-import { PrismaRelationCollector, Relation } from "./relation-collector.js";
+import { PrismaRelationCollector, Relation } from "./field-relation-collector.js";
 export type PrismaSchemaData = {
     schemaPath?: string;
     schema: string;
-    parsedSchema: ReturnType<typeof getSchema>;
+    ast: ReturnType<typeof getSchema>;
     builder: ReturnType<typeof createPrismaSchemaBuilder>;
     relations: Relation[];
 };

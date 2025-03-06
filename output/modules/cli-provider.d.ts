@@ -1,3 +1,3 @@
-declare const loadQueryRenderManager: () => Promise<(sourceCommand: string) => Promise<void> | undefined>;
+declare const loadQueryRenderManager: () => Promise<(sourceCommand: string) => void>;
 export default loadQueryRenderManager;
 //# sourceMappingURL=cli-provider.d.ts.map

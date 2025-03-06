@@ -1,7 +1,8 @@
 import chalk from "chalk";
+import { handlerResponse } from "../handler-registries/handler-registry.js";
 import { printSchema } from "@mrleebo/prisma-ast";
 import { useHelper } from "../schema-helper.js";
-import { getRelationStatistics } from "../relation-logger.js";
+import { getRelationStatistics } from "../field-relation-logger.js";
 import { PrismaHighlighter } from "prismalux";
 import boxen from "boxen";
 const highlightPrismaSchema = new PrismaHighlighter();
@@ -36,14 +37,16 @@ export function extractModelSummary(model, relations) {
         };
     });
 }
-export const getModel = (prismaState, args) => {
+export const getModel = (prismaState, data) => {
+    const { args } = data;
+    const response = handlerResponse(data);
     if (!args?.models?.length) {
-        return "No model specified";
+        return response.result("No model specified");
     }
     const modelName = args.models[0];
     const model = useHelper(prismaState).getModelByName(modelName);
     if (!model) {
-        return `Model ${modelName} not found`;
+        return response.result(`Model ${modelName} not found`);
     }
     const fields = extractModelSummary(model, prismaState.relations);
     const { totalRelations, uniqueModels } = getRelationStatistics(prismaState.relations, model.name);
@@ -76,10 +79,10 @@ export const getModel = (prismaState, args) => {
     // Prisma Schema Source
     output += chalk.underline("Schema:") + hSchema;
     // Boxen output
-    return boxen(output, {
+    return response.result(boxen(output, {
         padding: 1,
         borderColor: "cyan",
         borderStyle: "round",
-    });
+    }));
 };
 //# sourceMappingURL=get-model.js.map
