@@ -1,12 +1,4 @@
 const DSL_PATTERN = /^([A-Z]+)(?:\s+([A-Z_]+))?(?:\s+([\w\s,*]+))?(?:\s*\(\{([\s\S]*?)\}\))?(?:\s*\(([^)]*?)\))?$/i;
-const ACTION_TYPE_MAP = {
-    GET: "query",
-    ADD: "mutation",
-    DELETE: "mutation",
-    UPDATE: "mutation",
-    PRINT: "query",
-    VALIDATE: "query"
-};
 const ACTION_COMMAND_MAP = {
     GET: ["MODELS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
     ADD: ["MODEL", "FIELD", "RELATION", "ENUM"],
@@ -17,8 +9,30 @@ const ACTION_COMMAND_MAP = {
 };
 export class PrismaQlDslParser {
     argsProcessors;
+    customCommands = {};
+    actionTypeMap = {
+        GET: "query",
+        ADD: "mutation",
+        DELETE: "mutation",
+        UPDATE: "mutation",
+        PRINT: "query",
+        VALIDATE: "query",
+    };
     constructor(argsProcessors) {
         this.argsProcessors = argsProcessors;
+    }
+    registerCommand(action, command, type) {
+        if (!this.customCommands[action]) {
+            this.customCommands[action] = [];
+        }
+        this.customCommands[action].push(command);
+        this.actionTypeMap[action] = type;
+    }
+    getCommands() {
+        return {
+            ...ACTION_COMMAND_MAP,
+            ...this.customCommands,
+        };
     }
     parseCommand(input) {
         const trimmed = input.trim();
@@ -41,13 +55,16 @@ export class PrismaQlDslParser {
             prismaBlockStr = prismaBlockStr.replace(/\|/g, "\n");
         }
         const optionsStr = match[5]?.trim() || undefined;
-        if (!(actionStr in ACTION_COMMAND_MAP)) {
+        if (!(actionStr in ACTION_COMMAND_MAP) && !(actionStr in this.customCommands)) {
             throw new Error(`Unsupported action "${actionStr}". Supported actions: ${Object.keys(ACTION_COMMAND_MAP).join(", ")}`);
         }
         let finalCommand;
+        const actionKey = actionStr;
+        const commands = this.getCommands();
+        const availableCommands = commands[actionKey] || [];
         if (commandStr) {
-            if (!ACTION_COMMAND_MAP[actionStr].includes(commandStr)) {
-                throw new Error(`Invalid command "${commandStr}" for action "${actionStr}". Supported: ${ACTION_COMMAND_MAP[actionStr].join(", ")}`);
+            if (!availableCommands.includes(commandStr)) {
+                throw new Error(`Invalid command "${commandStr}" for action "${actionStr}". Supported: ${availableCommands.join(", ")}`);
             }
             finalCommand = commandStr;
         }
@@ -62,7 +79,7 @@ export class PrismaQlDslParser {
             options: parsedOptions,
             prismaBlock: prismaBlockStr,
             raw: input,
-            type: ACTION_TYPE_MAP[actionStr],
+            type: this.actionTypeMap[actionStr],
         };
     }
     parseParams(input) {
@@ -121,7 +138,7 @@ export class PrismaQlDslParser {
         if (!match)
             return null;
         const actionStr = match[1].toUpperCase();
-        return ACTION_TYPE_MAP[actionStr] || null;
+        return this.actionTypeMap[actionStr] || null;
     }
     isValid(source) {
         try {
@@ -133,7 +150,7 @@ export class PrismaQlDslParser {
         }
     }
 }
-export const prismaQlParser = new PrismaQlDslParser({
+export const basePrismaQlAgsProcessor = {
     GET: {
         default: (parsedArgs) => parsedArgs,
         MODEL: (parsedArgs, rawArgs) => {
@@ -221,5 +238,21 @@ export const prismaQlParser = new PrismaQlDslParser({
     VALIDATE: {
         default: (parsedArgs) => parsedArgs,
     },
-});
+};
+export const prismaQlParser = new PrismaQlDslParser(basePrismaQlAgsProcessor);
+const customArgsProcessors = {
+    // Берём все базовые обработчики как есть:
+    ...basePrismaQlAgsProcessor,
+    // Добавляем свой
+    CUSTOM_ACTION: {
+        default: (parsedArgs) => parsedArgs,
+        CUSTOM_COMMAND: (parsedArgs, rawArgs) => {
+            return {
+                models: rawArgs ? rawArgs.split(",").map(m => m.trim()) : [],
+            };
+        },
+    },
+};
+export const customParser = new PrismaQlDslParser(customArgsProcessors);
+console.log('test', customParser.parseCommand('CUSTOM_ACTION CUSTOM_COMMAND model1, model2;'));
 //# sourceMappingURL=dsl.js.map

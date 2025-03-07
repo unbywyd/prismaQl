@@ -182,6 +182,6 @@ export class PrismaQlProvider {
     }
 
     private parseCommand<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand, T extends 'query' | 'mutation'>(input: string): PrismaQLParsedDSL<A, C, T> {
-        return prismaQlParser.parseCommand<A, C, T>(input);
+        return prismaQlParser.parseCommand(input);
     }
 }

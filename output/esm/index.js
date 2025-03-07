@@ -6,14 +6,6 @@ var __export = (target, all) => {
 
 // src/modules/dsl.ts
 var DSL_PATTERN = /^([A-Z]+)(?:\s+([A-Z_]+))?(?:\s+([\w\s,*]+))?(?:\s*\(\{([\s\S]*?)\}\))?(?:\s*\(([^)]*?)\))?$/i;
-var ACTION_TYPE_MAP = {
-  GET: "query",
-  ADD: "mutation",
-  DELETE: "mutation",
-  UPDATE: "mutation",
-  PRINT: "query",
-  VALIDATE: "query"
-};
 var ACTION_COMMAND_MAP = {
   GET: ["MODELS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
   ADD: ["MODEL", "FIELD", "RELATION", "ENUM"],
@@ -25,6 +17,28 @@ var ACTION_COMMAND_MAP = {
 var PrismaQlDslParser = class {
   constructor(argsProcessors) {
     this.argsProcessors = argsProcessors;
+  }
+  customCommands = {};
+  actionTypeMap = {
+    GET: "query",
+    ADD: "mutation",
+    DELETE: "mutation",
+    UPDATE: "mutation",
+    PRINT: "query",
+    VALIDATE: "query"
+  };
+  registerCommand(action, command, type) {
+    if (!this.customCommands[action]) {
+      this.customCommands[action] = [];
+    }
+    this.customCommands[action].push(command);
+    this.actionTypeMap[action] = type;
+  }
+  getCommands() {
+    return {
+      ...ACTION_COMMAND_MAP,
+      ...this.customCommands
+    };
   }
   parseCommand(input) {
     const trimmed = input.trim();
@@ -47,13 +61,16 @@ var PrismaQlDslParser = class {
       prismaBlockStr = prismaBlockStr.replace(/\|/g, "\n");
     }
     const optionsStr = match[5]?.trim() || void 0;
-    if (!(actionStr in ACTION_COMMAND_MAP)) {
+    if (!(actionStr in ACTION_COMMAND_MAP) && !(actionStr in this.customCommands)) {
       throw new Error(`Unsupported action "${actionStr}". Supported actions: ${Object.keys(ACTION_COMMAND_MAP).join(", ")}`);
     }
     let finalCommand;
+    const actionKey = actionStr;
+    const commands = this.getCommands();
+    const availableCommands = commands[actionKey] || [];
     if (commandStr) {
-      if (!ACTION_COMMAND_MAP[actionStr].includes(commandStr)) {
-        throw new Error(`Invalid command "${commandStr}" for action "${actionStr}". Supported: ${ACTION_COMMAND_MAP[actionStr].join(", ")}`);
+      if (!availableCommands.includes(commandStr)) {
+        throw new Error(`Invalid command "${commandStr}" for action "${actionStr}". Supported: ${availableCommands.join(", ")}`);
       }
       finalCommand = commandStr;
     }
@@ -68,7 +85,7 @@ var PrismaQlDslParser = class {
       options: parsedOptions,
       prismaBlock: prismaBlockStr,
       raw: input,
-      type: ACTION_TYPE_MAP[actionStr]
+      type: this.actionTypeMap[actionStr]
     };
   }
   parseParams(input) {
@@ -120,7 +137,7 @@ var PrismaQlDslParser = class {
     const match = source.match(DSL_ACTION_PATTERN);
     if (!match) return null;
     const actionStr = match[1].toUpperCase();
-    return ACTION_TYPE_MAP[actionStr] || null;
+    return this.actionTypeMap[actionStr] || null;
   }
   isValid(source) {
     try {
@@ -131,7 +148,7 @@ var PrismaQlDslParser = class {
     }
   }
 };
-var prismaQlParser = new PrismaQlDslParser({
+var basePrismaQlAgsProcessor = {
   GET: {
     default: (parsedArgs) => parsedArgs,
     MODEL: (parsedArgs, rawArgs) => {
@@ -215,7 +232,8 @@ var prismaQlParser = new PrismaQlDslParser({
   VALIDATE: {
     default: (parsedArgs) => parsedArgs
   }
-});
+};
+var prismaQlParser = new PrismaQlDslParser(basePrismaQlAgsProcessor);
 
 // src/modules/prisma-schema-loader.ts
 import fs2 from "fs";
@@ -2555,6 +2573,7 @@ export {
   PrismaQlRelationCollector,
   PrismaQlSchemaHelper,
   PrismaQlSchemaLoader,
+  basePrismaQlAgsProcessor,
   extractModelSummary,
   getManyToManyModelName,
   getManyToManyTableName,

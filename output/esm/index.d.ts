@@ -39,8 +39,10 @@ declare class PrismaQlRelationCollector {
 declare const getManyToManyTableName: (modelA: string, modelB: string, relationName?: string) => string;
 declare const getManyToManyModelName: (modelA: string, modelB: string, relationName?: string) => string;
 
-type PrismaQlDSLAction = "GET" | "ADD" | "DELETE" | "UPDATE" | "PRINT" | "VALIDATE";
-type PrismaQLDSLCommand = "MODELS" | "MODEL" | "FIELD" | "FIELDS" | "RELATIONS" | "ENUM_RELATIONS" | "ENUMS" | "ENUM" | "MODELS_LIST" | "RELATION";
+type BasePrismaQlDSLAction = "GET" | "ADD" | "DELETE" | "UPDATE" | "PRINT" | "VALIDATE";
+type BasePrismaQLDSLCommand = "MODELS" | "MODEL" | "FIELD" | "FIELDS" | "RELATIONS" | "ENUM_RELATIONS" | "ENUMS" | "ENUM" | "MODELS_LIST" | "RELATION";
+type PrismaQlDSLAction<A extends string = BasePrismaQlDSLAction> = A;
+type PrismaQLDSLCommand<C extends string = BasePrismaQLDSLCommand> = C;
 type PrismaQlDSLType = "query" | "mutation";
 type PrismaQlDSLMutationAction = "ADD" | "DELETE" | "UPDATE";
 type PrismaQlDSLQueryAction = "GET" | "PRINT" | "VALIDATE";
@@ -82,7 +84,7 @@ type PrismaQlDSLOptionMap = {
     };
 };
 type PrismaQlDSLOptions<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined> = A extends keyof PrismaQlDSLOptionMap ? C extends keyof PrismaQlDSLOptionMap[A] ? PrismaQlDSLOptionMap[A][C] : Record<string, string | number | boolean | Array<string>> : Record<string, string | number | boolean | Array<string>>;
-interface PrismaQLParsedDSL<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined, T extends PrismaQlDSLType> {
+interface PrismaQLParsedDSL<A extends PrismaQlDSLAction = PrismaQlDSLAction, C extends PrismaQLDSLCommand = PrismaQLDSLCommand, T extends PrismaQlDSLType = PrismaQlDSLType> {
     action: A;
     command?: C;
     args?: PrismaQLDSLArgs<A, C>;
@@ -91,21 +93,28 @@ interface PrismaQLParsedDSL<A extends PrismaQlDSLAction, C extends PrismaQLDSLCo
     raw: string;
     type: T;
 }
-type PrismaQlDSLArgsProcessor<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined> = (parsedArgs: PrismaQLDSLArgs<A, C>, rawArgs: string | undefined) => PrismaQLDSLArgs<A, C>;
-declare class PrismaQlDslParser {
+type PrismaQlDSLArgsProcessor<A extends PrismaQlDSLAction = PrismaQlDSLAction, C extends PrismaQLDSLCommand = PrismaQLDSLCommand> = (parsedArgs: PrismaQLDSLArgs<A, C>, rawArgs: string | undefined) => PrismaQLDSLArgs<A, C>;
+declare class PrismaQlDslParser<A extends string = PrismaQlDSLAction, C extends string = PrismaQLDSLCommand> {
     argsProcessors: Record<PrismaQlDSLAction, {
         default: PrismaQlDSLArgsProcessor<any, any>;
     } & Partial<Record<PrismaQLDSLCommand, PrismaQlDSLArgsProcessor<any, any>>>>;
+    private customCommands;
+    private actionTypeMap;
     constructor(argsProcessors: Record<PrismaQlDSLAction, {
         default: PrismaQlDSLArgsProcessor<any, any>;
     } & Partial<Record<PrismaQLDSLCommand, PrismaQlDSLArgsProcessor<any, any>>>>);
-    parseCommand<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined, T extends PrismaQlDSLType>(input: string): PrismaQLParsedDSL<A, C, T>;
+    registerCommand(action: A, command: C, type: PrismaQlDSLType): void;
+    getCommands(): Record<A, C[]>;
+    parseCommand<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand, T extends 'query' | 'mutation'>(input: string): PrismaQLParsedDSL<A, C, T>;
     parseParams(input: string): PrismaQlDSLOptions<any, any>;
     parseArgs<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined>(argsStr: string | undefined): PrismaQLDSLArgs<A, C>;
     detectActionType(source: string): PrismaQlDSLType | null;
     isValid(source: string): boolean | Error;
 }
-declare const prismaQlParser: PrismaQlDslParser;
+declare const basePrismaQlAgsProcessor: Record<PrismaQlDSLAction, {
+    default: PrismaQlDSLArgsProcessor<any, any>;
+} & Partial<Record<PrismaQLDSLCommand, PrismaQlDSLArgsProcessor<any, any>>>>;
+declare const prismaQlParser: PrismaQlDslParser<BasePrismaQlDSLAction, BasePrismaQLDSLCommand>;
 
 type PrismaQlSchemaData = {
     schemaPath?: string;
@@ -197,12 +206,12 @@ type PrismaQLHandlerResponse = {
     result?: any;
     error?: string | Error;
 };
-type PrismaQlHandler<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined, T extends PrismaQlDSLType> = (prismaState: PrismaQlSchemaData, dsl: PrismaQLParsedDSL<A, C, T>) => PrismaQLHandlerResponse;
+type PrismaQlHandler<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand, T extends PrismaQlDSLType> = (prismaState: PrismaQlSchemaData, dsl: PrismaQLParsedDSL<A, C, T>) => PrismaQLHandlerResponse;
 declare const handlerResponse: (dsl: PrismaQLParsedDSL<PrismaQlDSLAction, PrismaQLDSLCommand, PrismaQlDSLType>) => {
     error: (error: string | Error) => PrismaQLHandlerResponse;
     result: (result: any) => PrismaQLHandlerResponse;
 };
-declare class PrismaQlHandlerRegistry<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined, T extends PrismaQlDSLType> {
+declare class PrismaQlHandlerRegistry<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand, T extends PrismaQlDSLType> {
     protected handlers: Record<string, PrismaQlHandler<A, C, T>>;
     constructor(initialHandlers?: Record<string, PrismaQlHandler<A, C, T>>);
     register(action: A, command: C, handler: PrismaQlHandler<A, C, T>): void;
@@ -406,4 +415,4 @@ declare const queryRendersHandler: PrismaQlQueryHandlerRegistry;
 
 declare const queryJSONHandler: PrismaQlQueryHandlerRegistry;
 
-export { type DSLPrismaRelationType, type PrismaQLDSLArgs, type PrismaQLDSLCommand, type PrismaQLHandlerResponse, type PrismaQLParsedDSL, type PrismaQLRelation, type PrismaQLRelationStatistics, type PrismaQlDSLAction, type PrismaQlDSLArgsProcessor, type PrismaQlDSLMutationAction, type PrismaQlDSLOptionMap, type PrismaQlDSLOptions, type PrismaQlDSLQueryAction, type PrismaQlDSLType, PrismaQlDslParser, PrismaQlFieldRelationLogger, type PrismaQlHandler, PrismaQlHandlerRegistry, type PrismaQlJsonRelationTree, type PrismaQlModelTree, PrismaQlMutationHandlerRegistry, type PrismaQlMutationOptions, PrismaQlProvider, PrismaQlQueryHandlerRegistry, PrismaQlRelationCollector, type PrismaQlRelationNode, type PrismaQlRelationType, type PrismaQlSchemaData, PrismaQlSchemaHelper, PrismaQlSchemaLoader, type PrismaQlSchemaLoaderOptions, extractModelSummary, getManyToManyModelName, getManyToManyTableName, getRelationStatistics, handlerResponse, index$1 as jsonGetters, loadPrismaSchema, index as mutationHandlers, mutationsHandler, parseFieldForBuilder, prismaQlParser, queryJSONHandler, queryRendersHandler, index$2 as renderGetters, useHelper, validatePrismaSchema };
+export { type BasePrismaQLDSLCommand, type BasePrismaQlDSLAction, type DSLPrismaRelationType, type PrismaQLDSLArgs, type PrismaQLDSLCommand, type PrismaQLHandlerResponse, type PrismaQLParsedDSL, type PrismaQLRelation, type PrismaQLRelationStatistics, type PrismaQlDSLAction, type PrismaQlDSLArgsProcessor, type PrismaQlDSLMutationAction, type PrismaQlDSLOptionMap, type PrismaQlDSLOptions, type PrismaQlDSLQueryAction, type PrismaQlDSLType, PrismaQlDslParser, PrismaQlFieldRelationLogger, type PrismaQlHandler, PrismaQlHandlerRegistry, type PrismaQlJsonRelationTree, type PrismaQlModelTree, PrismaQlMutationHandlerRegistry, type PrismaQlMutationOptions, PrismaQlProvider, PrismaQlQueryHandlerRegistry, PrismaQlRelationCollector, type PrismaQlRelationNode, type PrismaQlRelationType, type PrismaQlSchemaData, PrismaQlSchemaHelper, PrismaQlSchemaLoader, type PrismaQlSchemaLoaderOptions, basePrismaQlAgsProcessor, extractModelSummary, getManyToManyModelName, getManyToManyTableName, getRelationStatistics, handlerResponse, index$1 as jsonGetters, loadPrismaSchema, index as mutationHandlers, mutationsHandler, parseFieldForBuilder, prismaQlParser, queryJSONHandler, queryRendersHandler, index$2 as renderGetters, useHelper, validatePrismaSchema };

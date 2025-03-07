@@ -1,8 +1,8 @@
 import { PrismaQlRelationType } from "./field-relation-collector.js";
 
-export type PrismaQlDSLAction = "GET" | "ADD" | "DELETE" | "UPDATE" | "PRINT" | "VALIDATE";
+export type BasePrismaQlDSLAction = "GET" | "ADD" | "DELETE" | "UPDATE" | "PRINT" | "VALIDATE";
 
-export type PrismaQLDSLCommand =
+export type BasePrismaQLDSLCommand =
     | "MODELS"
     | "MODEL"
     | "FIELD"
@@ -13,6 +13,9 @@ export type PrismaQLDSLCommand =
     | "ENUM"
     | "MODELS_LIST"
     | "RELATION";
+
+export type PrismaQlDSLAction<A extends string = BasePrismaQlDSLAction> = A;
+export type PrismaQLDSLCommand<C extends string = BasePrismaQLDSLCommand> = C;
 
 export type PrismaQlDSLType = "query" | "mutation";
 
@@ -63,7 +66,11 @@ export type PrismaQlDSLOptions<A extends PrismaQlDSLAction, C extends PrismaQLDS
     : Record<string, string | number | boolean | Array<string>>;
 
 
-export interface PrismaQLParsedDSL<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined, T extends PrismaQlDSLType> {
+export interface PrismaQLParsedDSL<
+    A extends PrismaQlDSLAction = PrismaQlDSLAction,
+    C extends PrismaQLDSLCommand = PrismaQLDSLCommand,
+    T extends PrismaQlDSLType = PrismaQlDSLType
+> {
     action: A;
     command?: C;
     args?: PrismaQLDSLArgs<A, C>;
@@ -73,21 +80,15 @@ export interface PrismaQLParsedDSL<A extends PrismaQlDSLAction, C extends Prisma
     type: T;
 }
 
-export type PrismaQlDSLArgsProcessor<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined> = (
+export type PrismaQlDSLArgsProcessor<
+    A extends PrismaQlDSLAction = PrismaQlDSLAction,
+    C extends PrismaQLDSLCommand = PrismaQLDSLCommand
+> = (
     parsedArgs: PrismaQLDSLArgs<A, C>,
     rawArgs: string | undefined
 ) => PrismaQLDSLArgs<A, C>;
 
 const DSL_PATTERN = /^([A-Z]+)(?:\s+([A-Z_]+))?(?:\s+([\w\s,*]+))?(?:\s*\(\{([\s\S]*?)\}\))?(?:\s*\(([^)]*?)\))?$/i;
-
-const ACTION_TYPE_MAP: Record<PrismaQlDSLAction, PrismaQlDSLType> = {
-    GET: "query",
-    ADD: "mutation",
-    DELETE: "mutation",
-    UPDATE: "mutation",
-    PRINT: "query",
-    VALIDATE: "query"
-};
 
 const ACTION_COMMAND_MAP: Record<PrismaQlDSLAction, PrismaQLDSLCommand[]> = {
     GET: ["MODELS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
@@ -98,7 +99,19 @@ const ACTION_COMMAND_MAP: Record<PrismaQlDSLAction, PrismaQLDSLCommand[]> = {
     VALIDATE: [],
 };
 
-export class PrismaQlDslParser {
+export class PrismaQlDslParser<
+    A extends string = PrismaQlDSLAction,
+    C extends string = PrismaQLDSLCommand
+> {
+    private customCommands: Record<A, C[]> = {} as Record<A, C[]>;
+    private actionTypeMap: Record<PrismaQlDSLAction, PrismaQlDSLType> = {
+        GET: "query",
+        ADD: "mutation",
+        DELETE: "mutation",
+        UPDATE: "mutation",
+        PRINT: "query",
+        VALIDATE: "query",
+    };
     constructor(
         public argsProcessors: Record<
             PrismaQlDSLAction,
@@ -106,7 +119,21 @@ export class PrismaQlDslParser {
         >
     ) {
     }
-    public parseCommand<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined, T extends PrismaQlDSLType>(input: string): PrismaQLParsedDSL<A, C, T> {
+    public registerCommand(action: A, command: C, type: PrismaQlDSLType) {
+        if (!this.customCommands[action]) {
+            this.customCommands[action] = [];
+        }
+        this.customCommands[action].push(command);
+        (this.actionTypeMap as Record<string, PrismaQlDSLType>)[action] = type;
+    }
+    public getCommands(): Record<A, C[]> {
+        return {
+            ...ACTION_COMMAND_MAP,
+            ...this.customCommands,
+        } as Record<A, C[]>;
+    }
+
+    parseCommand<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand, T extends 'query' | 'mutation'>(input: string): PrismaQLParsedDSL<A, C, T> {
         const trimmed = input.trim();
         if (!trimmed.endsWith(";")) {
             throw new Error("DSL command must end with a semicolon.");
@@ -119,7 +146,7 @@ export class PrismaQlDslParser {
         }
 
         const actionStr = match[1].toUpperCase() as PrismaQlDSLAction;
-        const commandStr = match[2]?.toUpperCase() as PrismaQLDSLCommand | undefined;
+        const commandStr = match[2]?.toUpperCase() as C;
         const argsStr = match[3]?.trim() || undefined;
         let prismaBlockStr = match[4]?.trim() || undefined;
         if (prismaBlockStr) {
@@ -129,14 +156,18 @@ export class PrismaQlDslParser {
             prismaBlockStr = prismaBlockStr.replace(/\|/g, "\n");
         }
         const optionsStr = match[5]?.trim() || undefined;
-        if (!(actionStr in ACTION_COMMAND_MAP)) {
+        if (!(actionStr in ACTION_COMMAND_MAP) && !(actionStr in this.customCommands)) {
             throw new Error(`Unsupported action "${actionStr}". Supported actions: ${Object.keys(ACTION_COMMAND_MAP).join(", ")}`);
         }
 
-        let finalCommand: PrismaQLDSLCommand | undefined;
+        let finalCommand: C | undefined;
+        const actionKey = actionStr as A;
+        const commands = this.getCommands() as unknown as Record<A, C[]>;
+        const availableCommands = commands[actionKey] || [];
+
         if (commandStr) {
-            if (!ACTION_COMMAND_MAP[actionStr].includes(commandStr)) {
-                throw new Error(`Invalid command "${commandStr}" for action "${actionStr}". Supported: ${ACTION_COMMAND_MAP[actionStr].join(", ")}`);
+            if (!availableCommands.includes(commandStr)) {
+                throw new Error(`Invalid command "${commandStr}" for action "${actionStr}". Supported: ${availableCommands.join(", ")}`);
             }
             finalCommand = commandStr;
         }
@@ -153,7 +184,7 @@ export class PrismaQlDslParser {
             options: parsedOptions,
             prismaBlock: prismaBlockStr,
             raw: input,
-            type: ACTION_TYPE_MAP[actionStr] as T,
+            type: this.actionTypeMap[actionStr] as T,
         };
     }
     parseParams(input: string): PrismaQlDSLOptions<any, any> {
@@ -207,7 +238,7 @@ export class PrismaQlDslParser {
         const match = source.match(DSL_ACTION_PATTERN);
         if (!match) return null;
         const actionStr = match[1].toUpperCase() as PrismaQlDSLAction;
-        return ACTION_TYPE_MAP[actionStr] || null;
+        return this.actionTypeMap[actionStr] || null;
     }
     isValid(source: string): boolean | Error {
         try {
@@ -219,7 +250,10 @@ export class PrismaQlDslParser {
     }
 }
 
-export const prismaQlParser = new PrismaQlDslParser({
+export const basePrismaQlAgsProcessor: Record<
+    PrismaQlDSLAction,
+    { default: PrismaQlDSLArgsProcessor<any, any> } & Partial<Record<PrismaQLDSLCommand, PrismaQlDSLArgsProcessor<any, any>>>
+> = {
     GET: {
         default: (parsedArgs) => parsedArgs,
         MODEL: (parsedArgs, rawArgs) => {
@@ -302,4 +336,37 @@ export const prismaQlParser = new PrismaQlDslParser({
     VALIDATE: {
         default: (parsedArgs) => parsedArgs,
     },
-});
+};
+
+export const prismaQlParser = new PrismaQlDslParser(basePrismaQlAgsProcessor);
+
+/**
+ * Example of extending the base parser with custom actions and commands
+ *
+type CustomAction = BasePrismaQlDSLAction | "SAY";
+type CustomCommand = BasePrismaQLDSLCommand | "HI";
+type CustomParserArgsProcessors = Record<
+    CustomAction,
+    {
+        default: PrismaQlDSLArgsProcessor<any, any>;
+    } & Partial<Record<CustomCommand, PrismaQlDSLArgsProcessor<any, any>>>
+>;
+
+const customArgsProcessors: CustomParserArgsProcessors = {
+    ...basePrismaQlAgsProcessor,
+    SAY: {
+        default: (parsedArgs) => parsedArgs,
+        HI: (parsedArgs, rawArgs) => {
+            return {
+                models: rawArgs ? rawArgs.split(",").map(m => m.trim()) : [],
+            };
+        },
+    },
+};
+
+export const customParser = new PrismaQlDslParser<CustomAction, CustomCommand>(
+    customArgsProcessors
+);
+customParser.registerCommand("SAY", "HI", "query");
+console.log('test', customParser.parseCommand('SAY HI model1, model2;'));
+*/

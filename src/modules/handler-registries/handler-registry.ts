@@ -12,7 +12,7 @@ export type PrismaQLHandlerResponse = {
     error?: string | Error;
 }
 
-export type PrismaQlHandler<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined, T extends PrismaQlDSLType> = (
+export type PrismaQlHandler<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand, T extends PrismaQlDSLType> = (
     prismaState: PrismaQlSchemaData,
     dsl: PrismaQLParsedDSL<A, C, T>
 ) => PrismaQLHandlerResponse;
@@ -34,7 +34,7 @@ export const handlerResponse = (dsl: PrismaQLParsedDSL<PrismaQlDSLAction, Prisma
     }
 }
 
-export class PrismaQlHandlerRegistry<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined, T extends PrismaQlDSLType> {
+export class PrismaQlHandlerRegistry<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand, T extends PrismaQlDSLType> {
     protected handlers: Record<string, PrismaQlHandler<A, C, T>> = {};
 
     constructor(
