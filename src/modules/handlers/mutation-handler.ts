@@ -10,7 +10,7 @@ import { updateEnum } from "../prehandlers/mutation-handlers/update-enum.js";
 import { updateField } from "../prehandlers/mutation-handlers/update-field.js";
 import { MutationHandlerRegistry } from "../handler-registries/mutation-handler-registry.js";
 
-const mutationHandler = new MutationHandlerRegistry();
+export const mutationHandler = new MutationHandlerRegistry();
 
 mutationHandler.register("ADD", "MODEL", addModel);
 mutationHandler.register("ADD", "FIELD", addField);
@@ -24,5 +24,3 @@ mutationHandler.register("DELETE", "RELATION", deleteRelation);
 
 mutationHandler.register("UPDATE", "FIELD", updateField);
 mutationHandler.register("UPDATE", "ENUM", updateEnum);
-
-export default mutationHandler;

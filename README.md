@@ -28,4 +28,4 @@ If you’re interested in contributing, reporting issues, or suggesting features
 ## License
 
 PrismaQL is licensed under the **MIT License**.  
-© 2024 [Artyom Gorlovetskiy](https://unbywyd.com).
+© 2025 [Artyom Gorlovetskiy](https://unbywyd.com).

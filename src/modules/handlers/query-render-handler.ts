@@ -7,7 +7,7 @@ import { getModels } from "../prehandlers/render-handlers/get-models.js";
 import { getRelations } from "../prehandlers/render-handlers/get-relations.js";
 import { QueryHandlerRegistry } from "../handler-registries/query-handler-registry.js";
 
-const queryHandler = new QueryHandlerRegistry();
+export const queryHandler = new QueryHandlerRegistry();
 
 queryHandler.register("GET", "MODEL", getModel);
 queryHandler.register("GET", "MODELS", getModels);
@@ -16,5 +16,3 @@ queryHandler.register("GET", "ENUMS", getEnums);
 queryHandler.register("GET", "MODELS_LIST", getModelNames);
 queryHandler.register("GET", "RELATIONS", getRelations);
 queryHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
-
-export default queryHandler;

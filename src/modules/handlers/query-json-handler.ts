@@ -8,7 +8,7 @@ import { getEnumRelations } from "../prehandlers/render-handlers/get-enum-relati
 import { QueryHandlerRegistry } from "../handler-registries/query-handler-registry.js";
 
 
-const queryJsonHandler = new QueryHandlerRegistry();
+export const queryJsonHandler = new QueryHandlerRegistry();
 
 queryJsonHandler.register("GET", "MODEL", getJsonModel);
 queryJsonHandler.register("GET", "MODELS", getJsonModels);
@@ -17,5 +17,3 @@ queryJsonHandler.register("GET", "ENUMS", getJsonEnums);
 queryJsonHandler.register("GET", "MODELS_LIST", getJsonModelNames);
 queryJsonHandler.register("GET", "RELATIONS", getJsonRelations);
 queryJsonHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
-
-export default queryJsonHandler;
