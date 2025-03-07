@@ -266,7 +266,7 @@ var loadPrismaSchema = async (inputPath) => {
     schemaPath = possibleSchemaPaths.find(fs.existsSync) || null;
   }
   if (!schemaPath) {
-    throw new Error(`\u274C Prisma schema file not found. Try: prismalux --path=[path_to_schema]`);
+    throw new Error(`\u274C Prisma schema file not found. Please ensure that the schema.prisma file exists in the "prisma" directory or provide a valid path.`);
   }
   const schemaContent = await fs.promises.readFile(schemaPath, "utf-8");
   if (!/^\s*(generator|datasource|client)\b/m.test(schemaContent)) {

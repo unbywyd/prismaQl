@@ -41,7 +41,7 @@ export const loadPrismaSchema = async (inputPath?: string): Promise<{ schema: st
 
     // If no file is found, throw an error
     if (!schemaPath) {
-        throw new Error(`❌ Prisma schema file not found. Try: prismalux --path=[path_to_schema]`);
+        throw new Error(`❌ Prisma schema file not found. Please ensure that the schema.prisma file exists in the "prisma" directory or provide a valid path.`);
     }
 
     // Read the file

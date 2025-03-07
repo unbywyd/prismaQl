@@ -311,7 +311,7 @@ var init_load_prisma_schema = __esm({
         schemaPath = possibleSchemaPaths.find(import_fs.default.existsSync) || null;
       }
       if (!schemaPath) {
-        throw new Error(`\u274C Prisma schema file not found. Try: prismalux --path=[path_to_schema]`);
+        throw new Error(`\u274C Prisma schema file not found. Please ensure that the schema.prisma file exists in the "prisma" directory or provide a valid path.`);
       }
       const schemaContent = await import_fs.default.promises.readFile(schemaPath, "utf-8");
       if (!/^\s*(generator|datasource|client)\b/m.test(schemaContent)) {
