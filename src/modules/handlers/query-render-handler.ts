@@ -5,14 +5,14 @@ import { getModelNames } from "../prehandlers/render-handlers/get-model-names.js
 import { getModel } from "../prehandlers/render-handlers/get-model.js";
 import { getModels } from "../prehandlers/render-handlers/get-models.js";
 import { getRelations } from "../prehandlers/render-handlers/get-relations.js";
-import { QueryHandlerRegistry } from "../handler-registries/query-handler-registry.js";
+import { PrismaQlQueryHandlerRegistry } from "../handler-registries/query-handler-registry.js";
 
-export const queryHandler = new QueryHandlerRegistry();
+export const queryRendersHandler = new PrismaQlQueryHandlerRegistry();
 
-queryHandler.register("GET", "MODEL", getModel);
-queryHandler.register("GET", "MODELS", getModels);
-queryHandler.register("GET", "FIELDS", getFields);
-queryHandler.register("GET", "ENUMS", getEnums);
-queryHandler.register("GET", "MODELS_LIST", getModelNames);
-queryHandler.register("GET", "RELATIONS", getRelations);
-queryHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
+queryRendersHandler.register("GET", "MODEL", getModel);
+queryRendersHandler.register("GET", "MODELS", getModels);
+queryRendersHandler.register("GET", "FIELDS", getFields);
+queryRendersHandler.register("GET", "ENUMS", getEnums);
+queryRendersHandler.register("GET", "MODELS_LIST", getModelNames);
+queryRendersHandler.register("GET", "RELATIONS", getRelations);
+queryRendersHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);

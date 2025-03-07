@@ -32,10 +32,10 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/modules/dsl.ts
 var dsl_exports = {};
 __export(dsl_exports, {
-  DslParser: () => DslParser,
-  dslParser: () => dslParser
+  PrismaQlDslParser: () => PrismaQlDslParser,
+  prismaQlParser: () => prismaQlParser
 });
-var DSL_PATTERN, ACTION_TYPE_MAP, ACTION_COMMAND_MAP, DslParser, dslParser;
+var DSL_PATTERN, ACTION_TYPE_MAP, ACTION_COMMAND_MAP, PrismaQlDslParser, prismaQlParser;
 var init_dsl = __esm({
   "src/modules/dsl.ts"() {
     DSL_PATTERN = /^([A-Z]+)(?:\s+([A-Z_]+))?(?:\s+([\w\s,*]+))?(?:\s*\(\{([\s\S]*?)\}\))?(?:\s*\(([^)]*?)\))?$/i;
@@ -55,7 +55,7 @@ var init_dsl = __esm({
       PRINT: [],
       VALIDATE: []
     };
-    DslParser = class {
+    PrismaQlDslParser = class {
       constructor(argsProcessors) {
         this.argsProcessors = argsProcessors;
       }
@@ -164,7 +164,7 @@ var init_dsl = __esm({
         }
       }
     };
-    dslParser = new DslParser({
+    prismaQlParser = new PrismaQlDslParser({
       GET: {
         default: (parsedArgs) => parsedArgs,
         MODEL: (parsedArgs, rawArgs) => {
@@ -325,10 +325,10 @@ var init_load_prisma_schema = __esm({
 // src/modules/prisma-schema-loader.ts
 var prisma_schema_loader_exports = {};
 __export(prisma_schema_loader_exports, {
-  PrismaSchemaLoader: () => PrismaSchemaLoader,
+  PrismaQlSchemaLoader: () => PrismaQlSchemaLoader,
   default: () => prisma_schema_loader_default
 });
-var import_fs2, import_fs_extra, import_path2, import_prisma_ast, import_internals2, import_prismalux, import_chalk, getDMMF2, HighlightPrismaSchema, PrismaSchemaLoader, prisma_schema_loader_default;
+var import_fs2, import_fs_extra, import_path2, import_prisma_ast, import_internals2, import_prismalux, import_chalk, getDMMF2, HighlightPrismaSchema, PrismaQlSchemaLoader, prisma_schema_loader_default;
 var init_prisma_schema_loader = __esm({
   "src/modules/prisma-schema-loader.ts"() {
     import_fs2 = __toESM(require("fs"), 1);
@@ -342,7 +342,7 @@ var init_prisma_schema_loader = __esm({
     import_chalk = __toESM(require("chalk"), 1);
     ({ getDMMF: getDMMF2 } = import_internals2.default);
     HighlightPrismaSchema = new import_prismalux.PrismaHighlighter();
-    PrismaSchemaLoader = class {
+    PrismaQlSchemaLoader = class {
       constructor(relationCollector, options = {}) {
         this.relationCollector = relationCollector;
         this.options = options;
@@ -482,25 +482,25 @@ var init_prisma_schema_loader = __esm({
         this.isValid();
       }
     };
-    prisma_schema_loader_default = PrismaSchemaLoader;
+    prisma_schema_loader_default = PrismaQlSchemaLoader;
   }
 });
 
 // src/modules/field-relation-collector.ts
 var field_relation_collector_exports = {};
 __export(field_relation_collector_exports, {
-  PrismaRelationCollector: () => PrismaRelationCollector,
+  PrismaQlRelationCollector: () => PrismaQlRelationCollector,
   getManyToManyModelName: () => getManyToManyModelName,
   getManyToManyTableName: () => getManyToManyTableName
 });
-var import_internals3, import_pluralize, import_change_case, getDMMF3, PrismaRelationCollector, getManyToManyTableName, getManyToManyModelName;
+var import_internals3, import_pluralize, import_change_case, getDMMF3, PrismaQlRelationCollector, getManyToManyTableName, getManyToManyModelName;
 var init_field_relation_collector = __esm({
   "src/modules/field-relation-collector.ts"() {
     import_internals3 = __toESM(require("@prisma/internals"), 1);
     import_pluralize = __toESM(require("pluralize"), 1);
     import_change_case = require("change-case");
     ({ getDMMF: getDMMF3 } = import_internals3.default);
-    PrismaRelationCollector = class {
+    PrismaQlRelationCollector = class {
       constructor(models = []) {
         this.models = models;
       }
@@ -868,10 +868,10 @@ var init_field_relation_collector = __esm({
 // src/modules/field-relation-logger.ts
 var field_relation_logger_exports = {};
 __export(field_relation_logger_exports, {
-  FieldRelationLogger: () => FieldRelationLogger,
+  PrismaQlFieldRelationLogger: () => PrismaQlFieldRelationLogger,
   getRelationStatistics: () => getRelationStatistics
 });
-var import_treeify, import_chalk2, import_boxen, import_internals4, import_fs3, getDMMF4, collector, FieldRelationLogger, getRelationStatistics;
+var import_treeify, import_chalk2, import_boxen, import_internals4, import_fs3, getDMMF4, collector, PrismaQlFieldRelationLogger, getRelationStatistics;
 var init_field_relation_logger = __esm({
   "src/modules/field-relation-logger.ts"() {
     import_treeify = __toESM(require("treeify"), 1);
@@ -881,8 +881,8 @@ var init_field_relation_logger = __esm({
     import_internals4 = __toESM(require("@prisma/internals"), 1);
     import_fs3 = __toESM(require("fs"), 1);
     ({ getDMMF: getDMMF4 } = import_internals4.default);
-    collector = new PrismaRelationCollector();
-    FieldRelationLogger = class {
+    collector = new PrismaQlRelationCollector();
+    PrismaQlFieldRelationLogger = class {
       relations;
       setRelations(relations) {
         this.relations = relations;
@@ -1093,10 +1093,10 @@ ${relsList}`, {
 // src/modules/handler-registries/handler-registry.ts
 var handler_registry_exports = {};
 __export(handler_registry_exports, {
-  HandlerRegistry: () => HandlerRegistry,
+  PrismaQlHandlerRegistry: () => PrismaQlHandlerRegistry,
   handlerResponse: () => handlerResponse
 });
-var handlerResponse, HandlerRegistry;
+var handlerResponse, PrismaQlHandlerRegistry;
 var init_handler_registry = __esm({
   "src/modules/handler-registries/handler-registry.ts"() {
     handlerResponse = (dsl) => {
@@ -1112,7 +1112,7 @@ var init_handler_registry = __esm({
         }
       };
     };
-    HandlerRegistry = class {
+    PrismaQlHandlerRegistry = class {
       handlers = {};
       constructor(initialHandlers) {
         if (initialHandlers) {
@@ -1288,7 +1288,7 @@ var init_prisma_ql_provider = __esm({
         this.mutationState = [];
       }
       parseCommand(input) {
-        return dslParser.parseCommand(input);
+        return prismaQlParser.parseCommand(input);
       }
     };
   }
@@ -1339,7 +1339,7 @@ var init_model_primary_fields = __esm({
 // src/modules/utils/schema-helper.ts
 var schema_helper_exports = {};
 __export(schema_helper_exports, {
-  SchemaHelper: () => SchemaHelper,
+  PrismaQlSchemaHelper: () => PrismaQlSchemaHelper,
   parseFieldForBuilder: () => parseFieldForBuilder,
   useHelper: () => useHelper
 });
@@ -1363,10 +1363,10 @@ function parseFieldForBuilder(prop) {
     sourceType: fieldType
   };
 }
-var SchemaHelper, useHelper;
+var PrismaQlSchemaHelper, useHelper;
 var init_schema_helper = __esm({
   "src/modules/utils/schema-helper.ts"() {
-    SchemaHelper = class {
+    PrismaQlSchemaHelper = class {
       parsedSchema;
       constructor(parsedSchema) {
         this.parsedSchema = parsedSchema;
@@ -1431,7 +1431,7 @@ var init_schema_helper = __esm({
       }
     };
     useHelper = (schema) => {
-      return new SchemaHelper("type" in schema ? schema : schema.ast);
+      return new PrismaQlSchemaHelper("type" in schema ? schema : schema.ast);
     };
   }
 });
@@ -1439,13 +1439,13 @@ var init_schema_helper = __esm({
 // src/modules/handler-registries/query-handler-registry.ts
 var query_handler_registry_exports = {};
 __export(query_handler_registry_exports, {
-  QueryHandlerRegistry: () => QueryHandlerRegistry
+  PrismaQlQueryHandlerRegistry: () => PrismaQlQueryHandlerRegistry
 });
-var QueryHandlerRegistry;
+var PrismaQlQueryHandlerRegistry;
 var init_query_handler_registry = __esm({
   "src/modules/handler-registries/query-handler-registry.ts"() {
     init_handler_registry();
-    QueryHandlerRegistry = class extends HandlerRegistry {
+    PrismaQlQueryHandlerRegistry = class extends PrismaQlHandlerRegistry {
       constructor(initialHandlers) {
         super(initialHandlers);
       }
@@ -1456,13 +1456,13 @@ var init_query_handler_registry = __esm({
 // src/modules/handler-registries/mutation-handler-registry.ts
 var mutation_handler_registry_exports = {};
 __export(mutation_handler_registry_exports, {
-  MutationHandlerRegistry: () => MutationHandlerRegistry
+  PrismaQlMutationHandlerRegistry: () => PrismaQlMutationHandlerRegistry
 });
-var MutationHandlerRegistry;
+var PrismaQlMutationHandlerRegistry;
 var init_mutation_handler_registry = __esm({
   "src/modules/handler-registries/mutation-handler-registry.ts"() {
     init_handler_registry();
-    MutationHandlerRegistry = class extends HandlerRegistry {
+    PrismaQlMutationHandlerRegistry = class extends PrismaQlHandlerRegistry {
       constructor(initialHandlers) {
         super(initialHandlers);
       }
@@ -2159,9 +2159,9 @@ var init_update_field = __esm({
 // src/modules/handlers/mutation-handler.ts
 var mutation_handler_exports = {};
 __export(mutation_handler_exports, {
-  mutationHandler: () => mutationHandler
+  mutationsHandler: () => mutationsHandler
 });
-var mutationHandler;
+var mutationsHandler;
 var init_mutation_handler = __esm({
   "src/modules/handlers/mutation-handler.ts"() {
     init_add_enum();
@@ -2175,17 +2175,17 @@ var init_mutation_handler = __esm({
     init_update_enum();
     init_update_field();
     init_mutation_handler_registry();
-    mutationHandler = new MutationHandlerRegistry();
-    mutationHandler.register("ADD", "MODEL", addModel);
-    mutationHandler.register("ADD", "FIELD", addField);
-    mutationHandler.register("ADD", "ENUM", addEnum);
-    mutationHandler.register("ADD", "RELATION", addRelation);
-    mutationHandler.register("DELETE", "ENUM", deleteEnum);
-    mutationHandler.register("DELETE", "MODEL", deleteModel);
-    mutationHandler.register("DELETE", "FIELD", deleteField);
-    mutationHandler.register("DELETE", "RELATION", deleteRelation);
-    mutationHandler.register("UPDATE", "FIELD", updateField);
-    mutationHandler.register("UPDATE", "ENUM", updateEnum);
+    mutationsHandler = new PrismaQlMutationHandlerRegistry();
+    mutationsHandler.register("ADD", "MODEL", addModel);
+    mutationsHandler.register("ADD", "FIELD", addField);
+    mutationsHandler.register("ADD", "ENUM", addEnum);
+    mutationsHandler.register("ADD", "RELATION", addRelation);
+    mutationsHandler.register("DELETE", "ENUM", deleteEnum);
+    mutationsHandler.register("DELETE", "MODEL", deleteModel);
+    mutationsHandler.register("DELETE", "FIELD", deleteField);
+    mutationsHandler.register("DELETE", "RELATION", deleteRelation);
+    mutationsHandler.register("UPDATE", "FIELD", updateField);
+    mutationsHandler.register("UPDATE", "ENUM", updateEnum);
   }
 });
 
@@ -2567,7 +2567,7 @@ var init_get_relations = __esm({
         return response.result("No models found");
       }
       const results = [];
-      const logger = new FieldRelationLogger(prismaState.relations);
+      const logger = new PrismaQlFieldRelationLogger(prismaState.relations);
       for (const model of selectedModels) {
         const log = logger.generateRelationTreeLog(model.name, options?.depth || 1);
         results.push(log);
@@ -2580,9 +2580,9 @@ var init_get_relations = __esm({
 // src/modules/handlers/query-render-handler.ts
 var query_render_handler_exports = {};
 __export(query_render_handler_exports, {
-  queryHandler: () => queryHandler
+  queryRendersHandler: () => queryRendersHandler
 });
-var queryHandler;
+var queryRendersHandler;
 var init_query_render_handler = __esm({
   "src/modules/handlers/query-render-handler.ts"() {
     init_get_enum_relations();
@@ -2593,14 +2593,14 @@ var init_query_render_handler = __esm({
     init_get_models();
     init_get_relations();
     init_query_handler_registry();
-    queryHandler = new QueryHandlerRegistry();
-    queryHandler.register("GET", "MODEL", getModel);
-    queryHandler.register("GET", "MODELS", getModels);
-    queryHandler.register("GET", "FIELDS", getFields);
-    queryHandler.register("GET", "ENUMS", getEnums);
-    queryHandler.register("GET", "MODELS_LIST", getModelNames);
-    queryHandler.register("GET", "RELATIONS", getRelations);
-    queryHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
+    queryRendersHandler = new PrismaQlQueryHandlerRegistry();
+    queryRendersHandler.register("GET", "MODEL", getModel);
+    queryRendersHandler.register("GET", "MODELS", getModels);
+    queryRendersHandler.register("GET", "FIELDS", getFields);
+    queryRendersHandler.register("GET", "ENUMS", getEnums);
+    queryRendersHandler.register("GET", "MODELS_LIST", getModelNames);
+    queryRendersHandler.register("GET", "RELATIONS", getRelations);
+    queryRendersHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
   }
 });
 
@@ -2797,7 +2797,7 @@ var init_get_relations2 = __esm({
         });
       }
       const results = [];
-      const logger = new FieldRelationLogger(prismaState.relations);
+      const logger = new PrismaQlFieldRelationLogger(prismaState.relations);
       for (const model of selectedModels) {
         const log = logger.buildJsonModelTrees(model.name, prismaState.relations, options?.depth || 1);
         results.push(log);
@@ -2813,9 +2813,9 @@ var init_get_relations2 = __esm({
 // src/modules/handlers/query-json-handler.ts
 var query_json_handler_exports = {};
 __export(query_json_handler_exports, {
-  queryJsonHandler: () => queryJsonHandler
+  queryJSONHandler: () => queryJSONHandler
 });
-var queryJsonHandler;
+var queryJSONHandler;
 var init_query_json_handler = __esm({
   "src/modules/handlers/query-json-handler.ts"() {
     init_get_enums2();
@@ -2826,14 +2826,14 @@ var init_query_json_handler = __esm({
     init_get_relations2();
     init_get_enum_relations();
     init_query_handler_registry();
-    queryJsonHandler = new QueryHandlerRegistry();
-    queryJsonHandler.register("GET", "MODEL", getJsonModel);
-    queryJsonHandler.register("GET", "MODELS", getJsonModels);
-    queryJsonHandler.register("GET", "FIELDS", getJsonFields);
-    queryJsonHandler.register("GET", "ENUMS", getJsonEnums);
-    queryJsonHandler.register("GET", "MODELS_LIST", getJsonModelNames);
-    queryJsonHandler.register("GET", "RELATIONS", getJsonRelations);
-    queryJsonHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
+    queryJSONHandler = new PrismaQlQueryHandlerRegistry();
+    queryJSONHandler.register("GET", "MODEL", getJsonModel);
+    queryJSONHandler.register("GET", "MODELS", getJsonModels);
+    queryJSONHandler.register("GET", "FIELDS", getJsonFields);
+    queryJSONHandler.register("GET", "ENUMS", getJsonEnums);
+    queryJSONHandler.register("GET", "MODELS_LIST", getJsonModelNames);
+    queryJSONHandler.register("GET", "RELATIONS", getJsonRelations);
+    queryJSONHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
   }
 });
 

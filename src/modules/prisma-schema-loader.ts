@@ -7,30 +7,29 @@ import { loadPrismaSchema } from "./utils/load-prisma-schema.js";
 import pkg from '@prisma/internals';
 const { getDMMF } = pkg;
 import type { DMMF } from "@prisma/generator-helper";
-import { PrismaRelationCollector, Relation } from "./field-relation-collector.js";
+import { PrismaQlRelationCollector, PrismaQLRelation } from "./field-relation-collector.js";
 import { PrismaHighlighter } from "prismalux";
 import chalk from "chalk";
 const HighlightPrismaSchema = new PrismaHighlighter();
 
-export type PrismaSchemaData = {
+export type PrismaQlSchemaData = {
     schemaPath?: string;
     schema: string;
     ast: ReturnType<typeof getSchema>;
     builder: ReturnType<typeof createPrismaSchemaBuilder>;
-    relations: Relation[]
+    relations: PrismaQLRelation[]
 }
 
-export type PrismaSchemaLoaderOptions = {
+export type PrismaQlSchemaLoaderOptions = {
     backupPath?: string;
 }
-
-export class PrismaSchemaLoader {
+export class PrismaQlSchemaLoader {
     private lastValidatedSchema: string | null = null;
-    private readonly prismaState: PrismaSchemaData | null = null;
+    private readonly prismaState: PrismaQlSchemaData | null = null;
     private backupPath: string | null = null;
     constructor(
-        public relationCollector: PrismaRelationCollector,
-        public options: PrismaSchemaLoaderOptions = {}
+        public relationCollector: PrismaQlRelationCollector,
+        public options: PrismaQlSchemaLoaderOptions = {}
     ) {
         if (options.backupPath) {
             this.backupPath = options.backupPath;
@@ -46,8 +45,8 @@ export class PrismaSchemaLoader {
     getSchemaPath() {
         return this.prismaState?.schemaPath;
     }
-    private setPrismaState(newState: PrismaSchemaData) {
-        (this.prismaState as PrismaSchemaData) = newState;
+    private setPrismaState(newState: PrismaQlSchemaData) {
+        (this.prismaState as PrismaQlSchemaData) = newState;
     }
     async loadFromFile(filePath?: string, forceReload = false) {
         if (this.prismaState && !forceReload) {
@@ -76,7 +75,7 @@ export class PrismaSchemaLoader {
     loadFromText(sourcePrismaSchema: string) {
         return this.prepareSchema(sourcePrismaSchema);
     }
-    async getState(): Promise<PrismaSchemaData> {
+    async getState(): Promise<PrismaQlSchemaData> {
         if (!this.prismaState) {
             await this.loadFromFile();
         }
@@ -86,7 +85,7 @@ export class PrismaSchemaLoader {
             relations
         }
     }
-    clonePrismaState(): PrismaSchemaData {
+    clonePrismaState(): PrismaQlSchemaData {
         if (!this.prismaState) {
             throw new Error("No schema loaded.");
         }
@@ -179,4 +178,4 @@ export class PrismaSchemaLoader {
     }
 }
 
-export default PrismaSchemaLoader;
+export default PrismaQlSchemaLoader;

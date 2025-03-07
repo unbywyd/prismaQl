@@ -1,9 +1,9 @@
-import { DSLCommand, DSLQueryAction } from "../dsl.js";
-import { Handler, HandlerRegistry } from "./handler-registry.js";
+import { PrismaQLDSLCommand, PrismaQlDSLQueryAction } from "../dsl.js";
+import { PrismaQlHandler, PrismaQlHandlerRegistry } from "./handler-registry.js";
 
-export class QueryHandlerRegistry extends HandlerRegistry<DSLQueryAction, DSLCommand, 'query'> {
+export class PrismaQlQueryHandlerRegistry extends PrismaQlHandlerRegistry<PrismaQlDSLQueryAction, PrismaQLDSLCommand, 'query'> {
     constructor(
-        initialHandlers?: Record<string, Handler<DSLQueryAction, DSLCommand, 'query'>>,
+        initialHandlers?: Record<string, PrismaQlHandler<PrismaQlDSLQueryAction, PrismaQLDSLCommand, 'query'>>,
     ) {
         super(initialHandlers);
     }

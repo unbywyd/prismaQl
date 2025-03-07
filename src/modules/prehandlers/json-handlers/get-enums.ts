@@ -1,8 +1,8 @@
 import { Enumerator } from "@mrleebo/prisma-ast";
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
 import { useHelper } from "../../utils/schema-helper.js";
 
-export const getJsonEnums: Handler<"GET", "ENUMS", "query"> = (prismaState, data) => {
+export const getJsonEnums: PrismaQlHandler<"GET", "ENUMS", "query"> = (prismaState, data) => {
     const response = handlerResponse(data);
     const helper = useHelper(prismaState);
     let enums = helper.getEnums();

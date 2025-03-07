@@ -5,15 +5,14 @@ import { getJsonModel } from "../prehandlers/json-handlers/get-model.js";
 import { getJsonModels } from "../prehandlers/json-handlers/get-models.js";
 import { getJsonRelations } from "../prehandlers/json-handlers/get-relations.js";
 import { getEnumRelations } from "../prehandlers/render-handlers/get-enum-relations.js";
-import { QueryHandlerRegistry } from "../handler-registries/query-handler-registry.js";
+import { PrismaQlQueryHandlerRegistry } from "../handler-registries/query-handler-registry.js";
 
+export const queryJSONHandler = new PrismaQlQueryHandlerRegistry();
 
-export const queryJsonHandler = new QueryHandlerRegistry();
-
-queryJsonHandler.register("GET", "MODEL", getJsonModel);
-queryJsonHandler.register("GET", "MODELS", getJsonModels);
-queryJsonHandler.register("GET", "FIELDS", getJsonFields);
-queryJsonHandler.register("GET", "ENUMS", getJsonEnums);
-queryJsonHandler.register("GET", "MODELS_LIST", getJsonModelNames);
-queryJsonHandler.register("GET", "RELATIONS", getJsonRelations);
-queryJsonHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
+queryJSONHandler.register("GET", "MODEL", getJsonModel);
+queryJSONHandler.register("GET", "MODELS", getJsonModels);
+queryJSONHandler.register("GET", "FIELDS", getJsonFields);
+queryJSONHandler.register("GET", "ENUMS", getJsonEnums);
+queryJSONHandler.register("GET", "MODELS_LIST", getJsonModelNames);
+queryJSONHandler.register("GET", "RELATIONS", getJsonRelations);
+queryJSONHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);

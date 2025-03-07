@@ -1,5 +1,5 @@
 import { Schema, Model, Field, Enum } from "@mrleebo/prisma-ast";
-import { PrismaSchemaData } from "../prisma-schema-loader.js";
+import { PrismaQlSchemaData } from "../prisma-schema-loader.js";
 import { Property } from "@mrleebo/prisma-ast";
 
 /**
@@ -38,9 +38,7 @@ export function parseFieldForBuilder(prop: Property) {
     };
 }
 
-
-
-export class SchemaHelper {
+export class PrismaQlSchemaHelper {
     private parsedSchema: Schema;
 
     constructor(parsedSchema: Schema) {
@@ -121,6 +119,6 @@ export class SchemaHelper {
     }
 }
 
-export const useHelper = (schema: Schema | PrismaSchemaData) => {
-    return new SchemaHelper("type" in schema ? schema : schema.ast);
+export const useHelper = (schema: Schema | PrismaQlSchemaData) => {
+    return new PrismaQlSchemaHelper("type" in schema ? schema : schema.ast);
 }

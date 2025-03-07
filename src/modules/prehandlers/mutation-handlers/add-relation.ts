@@ -1,10 +1,10 @@
 import { getManyToManyModelName, getManyToManyTableName } from "../../field-relation-collector.js";
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
 import pluralize from "pluralize";
 import { camelCase, pascalCase } from "change-case";
 import { useHelper } from "../../utils/schema-helper.js";
 
-export const addRelation: Handler<"ADD", "RELATION", "mutation"> = (prismaState, data) => {
+export const addRelation: PrismaQlHandler<"ADD", "RELATION", "mutation"> = (prismaState, data) => {
     const { args, options } = data;
     const response = handlerResponse(data);
     const type = options?.type;

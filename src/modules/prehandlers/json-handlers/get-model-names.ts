@@ -1,4 +1,4 @@
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
 import { useHelper } from "../../utils/schema-helper.js";
 
 
@@ -6,7 +6,7 @@ export const sortModelNames = (modelNames: string[]) => {
     modelNames.sort((a, b) => a.localeCompare(b));
 }
 
-export const getJsonModelNames: Handler<"GET", "MODELS_LIST", "query"> = (prismaState, data) => {
+export const getJsonModelNames: PrismaQlHandler<"GET", "MODELS_LIST", "query"> = (prismaState, data) => {
     const response = handlerResponse(data);
 
     const models = useHelper(prismaState).getModels();

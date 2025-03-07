@@ -1,7 +1,7 @@
 import { printSchema, Schema } from "@mrleebo/prisma-ast";
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js"
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js"
 import { useHelper } from "../../utils/schema-helper.js";
-export const getJsonModels: Handler<"GET", "MODELS", 'query'> = (prismaState, data) => {
+export const getJsonModels: PrismaQlHandler<"GET", "MODELS", 'query'> = (prismaState, data) => {
     const response = handlerResponse(data);
     const { args } = data;
     const models = useHelper(prismaState).getModels(args?.models);

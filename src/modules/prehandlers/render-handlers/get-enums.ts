@@ -1,5 +1,5 @@
 import { printSchema, Schema, Field, Enumerator } from "@mrleebo/prisma-ast";
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
 import { useHelper } from "../../utils/schema-helper.js";
 import boxen from "boxen";
 import { PrismaHighlighter } from "prismalux";
@@ -7,7 +7,7 @@ import chalk from "chalk";
 
 const highlightPrismaSchema = new PrismaHighlighter();
 
-export const getEnums: Handler<"GET", "ENUMS", "query"> = (prismaState, data) => {
+export const getEnums: PrismaQlHandler<"GET", "ENUMS", "query"> = (prismaState, data) => {
     const response = handlerResponse(data);
     const options = data.options;
     const helper = useHelper(prismaState);

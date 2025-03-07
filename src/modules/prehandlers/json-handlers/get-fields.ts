@@ -1,6 +1,6 @@
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
 import { useHelper } from "../../utils/schema-helper.js";
-export const getJsonFields: Handler<"GET", "FIELDS", "query"> = (prismaState, data) => {
+export const getJsonFields: PrismaQlHandler<"GET", "FIELDS", "query"> = (prismaState, data) => {
     const response = handlerResponse(data);
     const { args } = data;
 

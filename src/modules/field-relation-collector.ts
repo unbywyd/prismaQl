@@ -4,10 +4,10 @@ import type { DMMF } from "@prisma/generator-helper";
 import pluralize from 'pluralize';
 import { pascalCase } from 'change-case';
 
-export type RelationType = "1:1" | "1:M" | "M:N";
+export type PrismaQlRelationType = "1:1" | "1:M" | "M:N";
 
-export interface Relation {
-    type: RelationType;
+export interface PrismaQLRelation {
+    type: PrismaQlRelationType;
     fieldName?: string;
     modelName: string;
     relatedModel: string;
@@ -22,9 +22,9 @@ export interface Relation {
 }
 
 type Model = DMMF.Model;
-export class PrismaRelationCollector {
-    private relations: Relation[] = [];
-    getRelations(): Relation[] {
+export class PrismaQlRelationCollector {
+    private relations: PrismaQLRelation[] = [];
+    getRelations(): PrismaQLRelation[] {
         return this.relations;
     }
     async setModels(models: Model[]) {
@@ -35,7 +35,7 @@ export class PrismaRelationCollector {
     }
     constructor(private models: Model[] = []) { }
 
-    getRelation(modelName: string, fieldName: string): Relation | null {
+    getRelation(modelName: string, fieldName: string): PrismaQLRelation | null {
         return this.relations.find(r => r.modelName === modelName && r.fieldName === fieldName) || null;
     }
 
@@ -43,8 +43,8 @@ export class PrismaRelationCollector {
  * Function to detect one-to-one relationships in Prisma DMMF models.
  * It now detects **both** sides of the relationship (forward & reverse).
  */
-    detectOneToOneRelations(models: Model[]): Relation[] {
-        const relations: Relation[] = [];
+    detectOneToOneRelations(models: Model[]): PrismaQLRelation[] {
+        const relations: PrismaQLRelation[] = [];
 
         // Step 1: Identify explicit M:N join tables to exclude
         const joinTables = models.filter(model => {
@@ -160,8 +160,8 @@ export class PrismaRelationCollector {
 
         return relations;
     }
-    detectOneToManyRelations(models: Model[]): Relation[] {
-        const relations: Relation[] = [];
+    detectOneToManyRelations(models: Model[]): PrismaQLRelation[] {
+        const relations: PrismaQLRelation[] = [];
 
         for (const model of models) {
             for (const field of model.fields) {
@@ -236,8 +236,8 @@ export class PrismaRelationCollector {
     private getManyToManyTableName(modelA: string, modelB: string, relationName?: string): string {
         return getManyToManyTableName(modelA, modelB, relationName);
     }
-    detectManyToManyRelations(models: Model[]): Relation[] {
-        const relations: Relation[] = [];
+    detectManyToManyRelations(models: Model[]): PrismaQLRelation[] {
+        const relations: PrismaQLRelation[] = [];
         const seenRelations = new Set<string>(); // Prevent duplicate relations
 
         for (const model of models) {
@@ -327,8 +327,8 @@ export class PrismaRelationCollector {
 
         return relations;
     }
-    detectExplicitManyToManyRelations(models: Model[]): Relation[] {
-        const relations: Relation[] = [];
+    detectExplicitManyToManyRelations(models: Model[]): PrismaQLRelation[] {
+        const relations: PrismaQLRelation[] = [];
 
         for (const model of models) {
             // Step 1: Identify potential join tables
@@ -413,9 +413,9 @@ export class PrismaRelationCollector {
 
         return relations;
     }
-    private deduplicateRelations(relations: Relation[]): Relation[] {
+    private deduplicateRelations(relations: PrismaQLRelation[]): PrismaQLRelation[] {
         const seen = new Set<string>();
-        const result: Relation[] = [];
+        const result: PrismaQLRelation[] = [];
 
         for (const r of relations) {
             const key = [
@@ -440,7 +440,7 @@ export class PrismaRelationCollector {
 
         return result;
     }
-    async collectRelations(models: Model[]): Promise<Relation[]> {
+    async collectRelations(models: Model[]): Promise<PrismaQLRelation[]> {
         // 1) Detect explicit M:N relations
         const explicitM2MRelations = this.detectExplicitManyToManyRelations(models);
         // Collect join table names to exclude them from 1:1 and 1:M detection
@@ -461,7 +461,7 @@ export class PrismaRelationCollector {
         const oneToManyRelations = this.detectOneToManyRelations(modelsForOneX);
 
         // 5) Combine all relations into one array
-        let relations: Relation[] = [
+        let relations: PrismaQLRelation[] = [
             ...explicitM2MRelations,
             ...implicitM2MRelations,
             ...oneToOneRelations,

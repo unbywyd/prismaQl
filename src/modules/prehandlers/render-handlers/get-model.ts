@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js"
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js"
 import { printSchema, Schema } from "@mrleebo/prisma-ast";
 import { useHelper } from "../../utils/schema-helper.js";
 import { getRelationStatistics } from "../../field-relation-logger.js";
@@ -17,7 +17,7 @@ export type FieldSummary = {
 };
 
 
-export const getModel: Handler<"GET", "MODEL", "query"> = (prismaState, data) => {
+export const getModel: PrismaQlHandler<"GET", "MODEL", "query"> = (prismaState, data) => {
     const { args } = data;
     const response = handlerResponse(data);
 

@@ -1,10 +1,10 @@
-import { DSLCommand, DSLMutationAction } from "../dsl.js";
-import { Handler, HandlerRegistry } from "./handler-registry.js";
+import { PrismaQLDSLCommand, PrismaQlDSLMutationAction } from "../dsl.js";
+import { PrismaQlHandler, PrismaQlHandlerRegistry } from "./handler-registry.js";
 
 
-export class MutationHandlerRegistry extends HandlerRegistry<DSLMutationAction, DSLCommand, 'mutation'> {
+export class PrismaQlMutationHandlerRegistry extends PrismaQlHandlerRegistry<PrismaQlDSLMutationAction, PrismaQLDSLCommand, 'mutation'> {
     constructor(
-        initialHandlers?: Record<string, Handler<DSLMutationAction, DSLCommand, 'mutation'>>,
+        initialHandlers?: Record<string, PrismaQlHandler<PrismaQlDSLMutationAction, PrismaQLDSLCommand, 'mutation'>>,
     ) {
         super(initialHandlers);
     }

@@ -1,7 +1,7 @@
 import { constantCase } from "change-case";
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
 
-export const addEnum: Handler<"ADD", "ENUM", "mutation"> = (prismaState, data) => {
+export const addEnum: PrismaQlHandler<"ADD", "ENUM", "mutation"> = (prismaState, data) => {
     const { args } = data;
     const response = handlerResponse(data);
 

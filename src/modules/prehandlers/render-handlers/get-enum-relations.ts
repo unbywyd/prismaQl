@@ -1,11 +1,11 @@
 import chalk from "chalk";
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
 import { useHelper } from "../../utils/schema-helper.js";
 import boxen from "boxen";
 import { formatColumns } from "./get-model-names.js";
 
 
-export const getEnumRelations: Handler<"GET", "ENUM_RELATIONS", "query"> = (prismaState, data) => {
+export const getEnumRelations: PrismaQlHandler<"GET", "ENUM_RELATIONS", "query"> = (prismaState, data) => {
     const response = handlerResponse(data);
     const helper = useHelper(prismaState);
     const { args } = data;

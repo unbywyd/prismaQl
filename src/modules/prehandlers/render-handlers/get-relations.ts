@@ -1,9 +1,9 @@
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
-import { FieldRelationLogger } from "../../field-relation-logger.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlFieldRelationLogger } from "../../field-relation-logger.js";
 import { useHelper } from "../../utils/schema-helper.js";
 
 
-export const getRelations: Handler<"GET", "RELATIONS", 'query'> = (prismaState, data) => {
+export const getRelations: PrismaQlHandler<"GET", "RELATIONS", 'query'> = (prismaState, data) => {
     const response = handlerResponse(data);
     const helper = useHelper(prismaState);
     const { options, args } = data;
@@ -18,7 +18,7 @@ export const getRelations: Handler<"GET", "RELATIONS", 'query'> = (prismaState, 
         return response.result("No models found");
     }
     const results = [];
-    const logger = new FieldRelationLogger(prismaState.relations);
+    const logger = new PrismaQlFieldRelationLogger(prismaState.relations);
     for (const model of selectedModels) {
         const log = logger.generateRelationTreeLog(model.name, options?.depth || 1);
         results.push(log);

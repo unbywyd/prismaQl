@@ -22,7 +22,7 @@ var ACTION_COMMAND_MAP = {
   PRINT: [],
   VALIDATE: []
 };
-var DslParser = class {
+var PrismaQlDslParser = class {
   constructor(argsProcessors) {
     this.argsProcessors = argsProcessors;
   }
@@ -131,7 +131,7 @@ var DslParser = class {
     }
   }
 };
-var dslParser = new DslParser({
+var prismaQlParser = new PrismaQlDslParser({
   GET: {
     default: (parsedArgs) => parsedArgs,
     MODEL: (parsedArgs, rawArgs) => {
@@ -281,7 +281,7 @@ import { PrismaHighlighter } from "prismalux";
 import chalk from "chalk";
 var { getDMMF: getDMMF2 } = pkg2;
 var HighlightPrismaSchema = new PrismaHighlighter();
-var PrismaSchemaLoader = class {
+var PrismaQlSchemaLoader = class {
   constructor(relationCollector, options = {}) {
     this.relationCollector = relationCollector;
     this.options = options;
@@ -427,7 +427,7 @@ import pkg3 from "@prisma/internals";
 import pluralize from "pluralize";
 import { pascalCase } from "change-case";
 var { getDMMF: getDMMF3 } = pkg3;
-var PrismaRelationCollector = class {
+var PrismaQlRelationCollector = class {
   constructor(models = []) {
     this.models = models;
   }
@@ -797,8 +797,8 @@ import boxen from "boxen";
 import pkg4 from "@prisma/internals";
 import fs3 from "fs";
 var { getDMMF: getDMMF4 } = pkg4;
-var collector = new PrismaRelationCollector();
-var FieldRelationLogger = class {
+var collector = new PrismaQlRelationCollector();
+var PrismaQlFieldRelationLogger = class {
   relations;
   setRelations(relations) {
     this.relations = relations;
@@ -1021,7 +1021,7 @@ var handlerResponse = (dsl) => {
     }
   };
 };
-var HandlerRegistry = class {
+var PrismaQlHandlerRegistry = class {
   handlers = {};
   constructor(initialHandlers) {
     if (initialHandlers) {
@@ -1184,7 +1184,7 @@ var PrismaQlProvider = class {
     this.mutationState = [];
   }
   parseCommand(input) {
-    return dslParser.parseCommand(input);
+    return prismaQlParser.parseCommand(input);
   }
 };
 
@@ -1243,7 +1243,7 @@ function parseFieldForBuilder(prop) {
     sourceType: fieldType
   };
 }
-var SchemaHelper = class {
+var PrismaQlSchemaHelper = class {
   parsedSchema;
   constructor(parsedSchema) {
     this.parsedSchema = parsedSchema;
@@ -1308,18 +1308,18 @@ var SchemaHelper = class {
   }
 };
 var useHelper = (schema) => {
-  return new SchemaHelper("type" in schema ? schema : schema.ast);
+  return new PrismaQlSchemaHelper("type" in schema ? schema : schema.ast);
 };
 
 // src/modules/handler-registries/query-handler-registry.ts
-var QueryHandlerRegistry = class extends HandlerRegistry {
+var PrismaQlQueryHandlerRegistry = class extends PrismaQlHandlerRegistry {
   constructor(initialHandlers) {
     super(initialHandlers);
   }
 };
 
 // src/modules/handler-registries/mutation-handler-registry.ts
-var MutationHandlerRegistry = class extends HandlerRegistry {
+var PrismaQlMutationHandlerRegistry = class extends PrismaQlHandlerRegistry {
   constructor(initialHandlers) {
     super(initialHandlers);
   }
@@ -1668,7 +1668,7 @@ var getRelations = (prismaState, data) => {
     return response.result("No models found");
   }
   const results = [];
-  const logger = new FieldRelationLogger(prismaState.relations);
+  const logger = new PrismaQlFieldRelationLogger(prismaState.relations);
   for (const model of selectedModels) {
     const log = logger.generateRelationTreeLog(model.name, options?.depth || 1);
     results.push(log);
@@ -1866,7 +1866,7 @@ var getJsonRelations = (prismaState, data) => {
     });
   }
   const results = [];
-  const logger = new FieldRelationLogger(prismaState.relations);
+  const logger = new PrismaQlFieldRelationLogger(prismaState.relations);
   for (const model of selectedModels) {
     const log = logger.buildJsonModelTrees(model.name, prismaState.relations, options?.depth || 1);
     results.push(log);
@@ -2514,48 +2514,47 @@ var updateField = (prismaState, data) => {
 };
 
 // src/modules/handlers/mutation-handler.ts
-var mutationHandler = new MutationHandlerRegistry();
-mutationHandler.register("ADD", "MODEL", addModel);
-mutationHandler.register("ADD", "FIELD", addField);
-mutationHandler.register("ADD", "ENUM", addEnum);
-mutationHandler.register("ADD", "RELATION", addRelation);
-mutationHandler.register("DELETE", "ENUM", deleteEnum);
-mutationHandler.register("DELETE", "MODEL", deleteModel);
-mutationHandler.register("DELETE", "FIELD", deleteField);
-mutationHandler.register("DELETE", "RELATION", deleteRelation);
-mutationHandler.register("UPDATE", "FIELD", updateField);
-mutationHandler.register("UPDATE", "ENUM", updateEnum);
+var mutationsHandler = new PrismaQlMutationHandlerRegistry();
+mutationsHandler.register("ADD", "MODEL", addModel);
+mutationsHandler.register("ADD", "FIELD", addField);
+mutationsHandler.register("ADD", "ENUM", addEnum);
+mutationsHandler.register("ADD", "RELATION", addRelation);
+mutationsHandler.register("DELETE", "ENUM", deleteEnum);
+mutationsHandler.register("DELETE", "MODEL", deleteModel);
+mutationsHandler.register("DELETE", "FIELD", deleteField);
+mutationsHandler.register("DELETE", "RELATION", deleteRelation);
+mutationsHandler.register("UPDATE", "FIELD", updateField);
+mutationsHandler.register("UPDATE", "ENUM", updateEnum);
 
 // src/modules/handlers/query-render-handler.ts
-var queryHandler = new QueryHandlerRegistry();
-queryHandler.register("GET", "MODEL", getModel);
-queryHandler.register("GET", "MODELS", getModels);
-queryHandler.register("GET", "FIELDS", getFields);
-queryHandler.register("GET", "ENUMS", getEnums);
-queryHandler.register("GET", "MODELS_LIST", getModelNames);
-queryHandler.register("GET", "RELATIONS", getRelations);
-queryHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
+var queryRendersHandler = new PrismaQlQueryHandlerRegistry();
+queryRendersHandler.register("GET", "MODEL", getModel);
+queryRendersHandler.register("GET", "MODELS", getModels);
+queryRendersHandler.register("GET", "FIELDS", getFields);
+queryRendersHandler.register("GET", "ENUMS", getEnums);
+queryRendersHandler.register("GET", "MODELS_LIST", getModelNames);
+queryRendersHandler.register("GET", "RELATIONS", getRelations);
+queryRendersHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
 
 // src/modules/handlers/query-json-handler.ts
-var queryJsonHandler = new QueryHandlerRegistry();
-queryJsonHandler.register("GET", "MODEL", getJsonModel);
-queryJsonHandler.register("GET", "MODELS", getJsonModels);
-queryJsonHandler.register("GET", "FIELDS", getJsonFields);
-queryJsonHandler.register("GET", "ENUMS", getJsonEnums);
-queryJsonHandler.register("GET", "MODELS_LIST", getJsonModelNames);
-queryJsonHandler.register("GET", "RELATIONS", getJsonRelations);
-queryJsonHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
+var queryJSONHandler = new PrismaQlQueryHandlerRegistry();
+queryJSONHandler.register("GET", "MODEL", getJsonModel);
+queryJSONHandler.register("GET", "MODELS", getJsonModels);
+queryJSONHandler.register("GET", "FIELDS", getJsonFields);
+queryJSONHandler.register("GET", "ENUMS", getJsonEnums);
+queryJSONHandler.register("GET", "MODELS_LIST", getJsonModelNames);
+queryJSONHandler.register("GET", "RELATIONS", getJsonRelations);
+queryJSONHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
 export {
-  DslParser,
-  FieldRelationLogger,
-  HandlerRegistry,
-  MutationHandlerRegistry,
+  PrismaQlDslParser,
+  PrismaQlFieldRelationLogger,
+  PrismaQlHandlerRegistry,
+  PrismaQlMutationHandlerRegistry,
   PrismaQlProvider,
-  PrismaRelationCollector,
-  PrismaSchemaLoader,
-  QueryHandlerRegistry,
-  SchemaHelper,
-  dslParser,
+  PrismaQlQueryHandlerRegistry,
+  PrismaQlRelationCollector,
+  PrismaQlSchemaHelper,
+  PrismaQlSchemaLoader,
   extractModelSummary,
   getManyToManyModelName,
   getManyToManyTableName,
@@ -2563,11 +2562,12 @@ export {
   handlerResponse,
   json_handlers_exports as jsonGetters,
   loadPrismaSchema,
-  mutationHandler,
   mutation_handlers_exports as mutationHandlers,
+  mutationsHandler,
   parseFieldForBuilder,
-  queryHandler,
-  queryJsonHandler,
+  prismaQlParser,
+  queryJSONHandler,
+  queryRendersHandler,
   render_handlers_exports as renderGetters,
   useHelper,
   validatePrismaSchema

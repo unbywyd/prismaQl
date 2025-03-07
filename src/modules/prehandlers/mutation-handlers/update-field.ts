@@ -1,8 +1,8 @@
 import { Field, getSchema, Model, Property } from "@mrleebo/prisma-ast";
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
 import { parseFieldForBuilder } from "../../utils/schema-helper.js";
 
-export const updateField: Handler<"UPDATE", "FIELD", "mutation"> = (prismaState, data) => {
+export const updateField: PrismaQlHandler<"UPDATE", "FIELD", "mutation"> = (prismaState, data) => {
     const response = handlerResponse(data);
     const { args } = data;
     const fieldName = args?.fields?.[0];

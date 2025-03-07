@@ -1,8 +1,8 @@
 import { getSchema, Property } from "@mrleebo/prisma-ast";
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
 import { parseFieldForBuilder, useHelper } from "../../utils/schema-helper.js";
 
-export const addModel: Handler<"ADD", "MODEL", "mutation"> = (prismaState, data) => {
+export const addModel: PrismaQlHandler<"ADD", "MODEL", "mutation"> = (prismaState, data) => {
     const { args, prismaBlock } = data;
     const response = handlerResponse(data);
 

@@ -1,6 +1,6 @@
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
 
-export const deleteField: Handler<"DELETE", "FIELD", "mutation"> = (prismaState, data) => {
+export const deleteField: PrismaQlHandler<"DELETE", "FIELD", "mutation"> = (prismaState, data) => {
     const { args } = data;
     const response = handlerResponse(data);
 

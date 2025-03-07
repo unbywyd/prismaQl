@@ -1,9 +1,9 @@
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
-import { FieldRelationLogger, JsonRelationTree } from "../../field-relation-logger.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlFieldRelationLogger, PrismaQlJsonRelationTree } from "../../field-relation-logger.js";
 import { useHelper } from "../../utils/schema-helper.js";
 
 
-export const getJsonRelations: Handler<"GET", "RELATIONS", 'query'> = (prismaState, data) => {
+export const getJsonRelations: PrismaQlHandler<"GET", "RELATIONS", 'query'> = (prismaState, data) => {
     const response = handlerResponse(data);
     const helper = useHelper(prismaState);
     const { options, args } = data;
@@ -20,8 +20,8 @@ export const getJsonRelations: Handler<"GET", "RELATIONS", 'query'> = (prismaSta
             results: []
         });
     }
-    const results: Array<JsonRelationTree> = [];
-    const logger = new FieldRelationLogger(prismaState.relations);
+    const results: Array<PrismaQlJsonRelationTree> = [];
+    const logger = new PrismaQlFieldRelationLogger(prismaState.relations);
     for (const model of selectedModels) {
         const log = logger.buildJsonModelTrees(model.name, prismaState.relations, options?.depth || 1);
         results.push(log);

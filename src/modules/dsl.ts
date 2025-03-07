@@ -1,8 +1,8 @@
-import { RelationType } from "./field-relation-collector.js";
+import { PrismaQlRelationType } from "./field-relation-collector.js";
 
-export type DSLAction = "GET" | "ADD" | "DELETE" | "UPDATE" | "PRINT" | "VALIDATE";
+export type PrismaQlDSLAction = "GET" | "ADD" | "DELETE" | "UPDATE" | "PRINT" | "VALIDATE";
 
-export type DSLCommand =
+export type PrismaQLDSLCommand =
     | "MODELS"
     | "MODEL"
     | "FIELD"
@@ -14,20 +14,20 @@ export type DSLCommand =
     | "MODELS_LIST"
     | "RELATION";
 
-export type DSLType = "query" | "mutation";
+export type PrismaQlDSLType = "query" | "mutation";
 
-export type DSLMutationAction = "ADD" | "DELETE" | "UPDATE";
-export type DSLQueryAction = "GET" | "PRINT" | "VALIDATE";
+export type PrismaQlDSLMutationAction = "ADD" | "DELETE" | "UPDATE";
+export type PrismaQlDSLQueryAction = "GET" | "PRINT" | "VALIDATE";
 
-export type DSLArgs<A extends DSLAction, C extends DSLCommand | undefined> = {
+export type PrismaQLDSLArgs<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined> = {
     models?: string[];
     fields?: string[];
     enums?: string[];
 };
 
-export type DSLPrismaRelationType = RelationType;
+export type DSLPrismaRelationType = PrismaQlRelationType;
 
-export type DSLOptionMap = {
+export type PrismaQlDSLOptionMap = {
     GET: {
         ENUMS: { raw?: boolean };
         RELATIONS: { depth?: number };
@@ -55,32 +55,32 @@ export type DSLOptionMap = {
     }
 };
 
-export type DSLOptions<A extends DSLAction, C extends DSLCommand | undefined> =
-    A extends keyof DSLOptionMap
-    ? C extends keyof DSLOptionMap[A]
-    ? DSLOptionMap[A][C]
+export type PrismaQlDSLOptions<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined> =
+    A extends keyof PrismaQlDSLOptionMap
+    ? C extends keyof PrismaQlDSLOptionMap[A]
+    ? PrismaQlDSLOptionMap[A][C]
     : Record<string, string | number | boolean | Array<string>>
     : Record<string, string | number | boolean | Array<string>>;
 
 
-export interface ParsedDSL<A extends DSLAction, C extends DSLCommand | undefined, T extends DSLType> {
+export interface PrismaQLParsedDSL<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined, T extends PrismaQlDSLType> {
     action: A;
     command?: C;
-    args?: DSLArgs<A, C>;
-    options?: DSLOptions<A, C>;
+    args?: PrismaQLDSLArgs<A, C>;
+    options?: PrismaQlDSLOptions<A, C>;
     prismaBlock?: string;
     raw: string;
     type: T;
 }
 
-export type DSLArgsProcessor<A extends DSLAction, C extends DSLCommand | undefined> = (
-    parsedArgs: DSLArgs<A, C>,
+export type PrismaQlDSLArgsProcessor<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined> = (
+    parsedArgs: PrismaQLDSLArgs<A, C>,
     rawArgs: string | undefined
-) => DSLArgs<A, C>;
+) => PrismaQLDSLArgs<A, C>;
 
 const DSL_PATTERN = /^([A-Z]+)(?:\s+([A-Z_]+))?(?:\s+([\w\s,*]+))?(?:\s*\(\{([\s\S]*?)\}\))?(?:\s*\(([^)]*?)\))?$/i;
 
-const ACTION_TYPE_MAP: Record<DSLAction, DSLType> = {
+const ACTION_TYPE_MAP: Record<PrismaQlDSLAction, PrismaQlDSLType> = {
     GET: "query",
     ADD: "mutation",
     DELETE: "mutation",
@@ -89,7 +89,7 @@ const ACTION_TYPE_MAP: Record<DSLAction, DSLType> = {
     VALIDATE: "query"
 };
 
-const ACTION_COMMAND_MAP: Record<DSLAction, DSLCommand[]> = {
+const ACTION_COMMAND_MAP: Record<PrismaQlDSLAction, PrismaQLDSLCommand[]> = {
     GET: ["MODELS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
     ADD: ["MODEL", "FIELD", "RELATION", "ENUM"],
     DELETE: ["MODEL", "FIELD", "RELATION", "ENUM"],
@@ -98,15 +98,15 @@ const ACTION_COMMAND_MAP: Record<DSLAction, DSLCommand[]> = {
     VALIDATE: [],
 };
 
-export class DslParser {
+export class PrismaQlDslParser {
     constructor(
         public argsProcessors: Record<
-            DSLAction,
-            { default: DSLArgsProcessor<any, any> } & Partial<Record<DSLCommand, DSLArgsProcessor<any, any>>>
+            PrismaQlDSLAction,
+            { default: PrismaQlDSLArgsProcessor<any, any> } & Partial<Record<PrismaQLDSLCommand, PrismaQlDSLArgsProcessor<any, any>>>
         >
     ) {
     }
-    public parseCommand<A extends DSLAction, C extends DSLCommand | undefined, T extends DSLType>(input: string): ParsedDSL<A, C, T> {
+    public parseCommand<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined, T extends PrismaQlDSLType>(input: string): PrismaQLParsedDSL<A, C, T> {
         const trimmed = input.trim();
         if (!trimmed.endsWith(";")) {
             throw new Error("DSL command must end with a semicolon.");
@@ -118,8 +118,8 @@ export class DslParser {
             throw new Error(`Unable to parse DSL line: "${raw}"`);
         }
 
-        const actionStr = match[1].toUpperCase() as DSLAction;
-        const commandStr = match[2]?.toUpperCase() as DSLCommand | undefined;
+        const actionStr = match[1].toUpperCase() as PrismaQlDSLAction;
+        const commandStr = match[2]?.toUpperCase() as PrismaQLDSLCommand | undefined;
         const argsStr = match[3]?.trim() || undefined;
         let prismaBlockStr = match[4]?.trim() || undefined;
         if (prismaBlockStr) {
@@ -133,7 +133,7 @@ export class DslParser {
             throw new Error(`Unsupported action "${actionStr}". Supported actions: ${Object.keys(ACTION_COMMAND_MAP).join(", ")}`);
         }
 
-        let finalCommand: DSLCommand | undefined;
+        let finalCommand: PrismaQLDSLCommand | undefined;
         if (commandStr) {
             if (!ACTION_COMMAND_MAP[actionStr].includes(commandStr)) {
                 throw new Error(`Invalid command "${commandStr}" for action "${actionStr}". Supported: ${ACTION_COMMAND_MAP[actionStr].join(", ")}`);
@@ -156,8 +156,8 @@ export class DslParser {
             type: ACTION_TYPE_MAP[actionStr] as T,
         };
     }
-    parseParams(input: string): DSLOptions<any, any> {
-        const result: DSLOptions<any, any> = {};
+    parseParams(input: string): PrismaQlDSLOptions<any, any> {
+        const result: PrismaQlDSLOptions<any, any> = {};
         const tokens = input.split(",").map(t => t.trim()).filter(Boolean);
         for (const token of tokens) {
             const eqIndex = token.indexOf("=");
@@ -191,8 +191,8 @@ export class DslParser {
         }
         return result;
     }
-    parseArgs<A extends DSLAction, C extends DSLCommand | undefined>(argsStr: string | undefined): DSLArgs<A, C> {
-        const args: DSLArgs<A, C> = {};
+    parseArgs<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand | undefined>(argsStr: string | undefined): PrismaQLDSLArgs<A, C> {
+        const args: PrismaQLDSLArgs<A, C> = {};
         if (!argsStr) return args;
 
         const tokens = argsStr.split(",").map(t => t.trim()).filter(Boolean);
@@ -202,11 +202,11 @@ export class DslParser {
         }
         return args;
     }
-    detectActionType(source: string): DSLType | null {
+    detectActionType(source: string): PrismaQlDSLType | null {
         const DSL_ACTION_PATTERN = /^([A-Z]+)/i;
         const match = source.match(DSL_ACTION_PATTERN);
         if (!match) return null;
-        const actionStr = match[1].toUpperCase() as DSLAction;
+        const actionStr = match[1].toUpperCase() as PrismaQlDSLAction;
         return ACTION_TYPE_MAP[actionStr] || null;
     }
     isValid(source: string): boolean | Error {
@@ -219,7 +219,7 @@ export class DslParser {
     }
 }
 
-export const dslParser = new DslParser({
+export const prismaQlParser = new PrismaQlDslParser({
     GET: {
         default: (parsedArgs) => parsedArgs,
         MODEL: (parsedArgs, rawArgs) => {

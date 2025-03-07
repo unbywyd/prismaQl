@@ -8,19 +8,19 @@ import { deleteModel } from "../prehandlers/mutation-handlers/delete-model.js";
 import { deleteRelation } from "../prehandlers/mutation-handlers/delete-relations.js";
 import { updateEnum } from "../prehandlers/mutation-handlers/update-enum.js";
 import { updateField } from "../prehandlers/mutation-handlers/update-field.js";
-import { MutationHandlerRegistry } from "../handler-registries/mutation-handler-registry.js";
+import { PrismaQlMutationHandlerRegistry } from "../handler-registries/mutation-handler-registry.js";
 
-export const mutationHandler = new MutationHandlerRegistry();
+export const mutationsHandler = new PrismaQlMutationHandlerRegistry();
 
-mutationHandler.register("ADD", "MODEL", addModel);
-mutationHandler.register("ADD", "FIELD", addField);
-mutationHandler.register("ADD", "ENUM", addEnum);
-mutationHandler.register("ADD", "RELATION", addRelation);
+mutationsHandler.register("ADD", "MODEL", addModel);
+mutationsHandler.register("ADD", "FIELD", addField);
+mutationsHandler.register("ADD", "ENUM", addEnum);
+mutationsHandler.register("ADD", "RELATION", addRelation);
 
-mutationHandler.register("DELETE", "ENUM", deleteEnum);
-mutationHandler.register("DELETE", "MODEL", deleteModel);
-mutationHandler.register("DELETE", "FIELD", deleteField);
-mutationHandler.register("DELETE", "RELATION", deleteRelation);
+mutationsHandler.register("DELETE", "ENUM", deleteEnum);
+mutationsHandler.register("DELETE", "MODEL", deleteModel);
+mutationsHandler.register("DELETE", "FIELD", deleteField);
+mutationsHandler.register("DELETE", "RELATION", deleteRelation);
 
-mutationHandler.register("UPDATE", "FIELD", updateField);
-mutationHandler.register("UPDATE", "ENUM", updateEnum);
+mutationsHandler.register("UPDATE", "FIELD", updateField);
+mutationsHandler.register("UPDATE", "ENUM", updateEnum);

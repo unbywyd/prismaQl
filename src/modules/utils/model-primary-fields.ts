@@ -1,9 +1,9 @@
 import { Model, Property } from "@mrleebo/prisma-ast";
-import { Relation } from "../field-relation-collector.js";
+import { PrismaQLRelation } from "../field-relation-collector.js";
 import { FieldSummary } from "../prehandlers/render-handlers/get-model.js";
 
 
-export function extractModelSummary(model: Model, relations: Relation[]): FieldSummary[] {
+export function extractModelSummary(model: Model, relations: PrismaQLRelation[]): FieldSummary[] {
     const fields = model?.properties?.filter(
         (prop): prop is Property => prop.type === "field" &&
 

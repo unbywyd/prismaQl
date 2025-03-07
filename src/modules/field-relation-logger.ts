@@ -1,24 +1,24 @@
-import { createPrismaSchemaBuilder, getSchema } from "@mrleebo/prisma-ast";
+import { createPrismaSchemaBuilder } from "@mrleebo/prisma-ast";
 import treeify from "treeify";
 import chalk from 'chalk';
 import boxen from 'boxen';
-import { PrismaRelationCollector, Relation } from "./field-relation-collector.js";
+import { PrismaQlRelationCollector, PrismaQLRelation } from "./field-relation-collector.js";
 import pkg from '@prisma/internals';
 const { getDMMF } = pkg;
 import type { DMMF } from "@prisma/generator-helper";
 import fs from 'fs';
-const collector = new PrismaRelationCollector();
+const collector = new PrismaQlRelationCollector();
 
-export type ModelTree = {
+export type PrismaQlModelTree = {
     model: string;
-    relations: RelationNode[];
+    relations: PrismaQlRelationNode[];
 };
-export type JsonRelationTree = {
-    trees: ModelTree[];
+export type PrismaQlJsonRelationTree = {
+    trees: PrismaQlModelTree[];
     models: Set<string>;
     relations: Set<string>;
 };
-export type RelationNode = {
+export type PrismaQlRelationNode = {
     relatedModel: string;
     field: string;
     type: string;
@@ -30,49 +30,49 @@ export type RelationNode = {
     constraints?: string[];
     isSelfRelation?: boolean;
     isList?: boolean;
-    subTree?: ModelTree;
+    subTree?: PrismaQlModelTree;
 };
 
-export type RelationStatistics = {
+export type PrismaQLRelationStatistics = {
     uniqueModels: number;
     totalRelations: number;
     maxDepth: number;
 }
-export class FieldRelationLogger {
-    relations: Relation[];
-    setRelations(relations: Relation[]) {
+export class PrismaQlFieldRelationLogger {
+    relations: PrismaQLRelation[];
+    setRelations(relations: PrismaQLRelation[]) {
         this.relations = relations;
     }
-    constructor(relations?: Relation[]) {
+    constructor(relations?: PrismaQLRelation[]) {
         if (relations) {
             this.setRelations(relations);
         }
     }
     buildJsonModelTrees(
         rootModel: string,
-        relations: Relation[],
+        relations: PrismaQLRelation[],
         maxDepth: number,
         depth = 0,
         visitedModels = new Set<string>()
-    ): JsonRelationTree {
+    ): PrismaQlJsonRelationTree {
         if (depth > maxDepth || visitedModels.has(rootModel)) {
             return { trees: [], models: new Set(), relations: new Set() };
         }
         visitedModels.add(rootModel);
 
-        let trees: ModelTree[] = [];
+        let trees: PrismaQlModelTree[] = [];
         let models = new Set<string>();
         let relationsSet = new Set<string>();
 
         const modelRelations = relations.filter(rel => rel.modelName === rootModel);
 
-        let relationNodes: RelationNode[] = [];
+        let relationNodes: PrismaQlRelationNode[] = [];
 
         for (const relation of modelRelations) {
             const isSelfRelation = relation.modelName === relation.relatedModel;
             const isList = (relation.type === "1:M" || relation.type === "M:N") && !relation.foreignKey;
 
-            let relationNode: RelationNode = {
+            let relationNode: PrismaQlRelationNode = {
                 relatedModel: relation.relatedModel,
                 field: relation.fieldName || relation.modelName,
                 type: relation.type,
@@ -105,7 +105,7 @@ export class FieldRelationLogger {
 
     buildModelTrees(
         rootModel: string,
-        relations: Relation[],
+        relations: PrismaQLRelation[],
         maxDepth: number,
         depth = 0,
         visitedModels = new Set<string>()
@@ -179,7 +179,7 @@ export class FieldRelationLogger {
 
         return { trees, models, relations: relationsSet };
     }
-    getRelationStatistics(modelName: string, maxDepth: number = 1): RelationStatistics {
+    getRelationStatistics(modelName: string, maxDepth: number = 1): PrismaQLRelationStatistics {
         if (!this.relations?.length) {
             throw new Error('No relations found. Please run relation-collector first and use the setRelations method to set the relations.');
         }
@@ -239,7 +239,7 @@ export class FieldRelationLogger {
     generateRelationTreeLog(
         rootModel: string,
         maxDepth: number = 1,
-        relations?: Relation[]
+        relations?: PrismaQLRelation[]
     ) {
         if (relations?.length) {
             this.setRelations(relations);
@@ -281,7 +281,7 @@ export class FieldRelationLogger {
 }
 
 
-export const getRelationStatistics = (relations: Relation[], modelName: string, maxDepth: number = 1): RelationStatistics => {
+export const getRelationStatistics = (relations: PrismaQLRelation[], modelName: string, maxDepth: number = 1): PrismaQLRelationStatistics => {
 
     let relatedModels = new Set<string>(); // Unique models
     let relationCount = 0; // Number of relations

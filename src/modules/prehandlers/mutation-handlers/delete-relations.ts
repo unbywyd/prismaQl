@@ -1,8 +1,8 @@
 import chalk from "chalk";
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
 import { Field } from "@mrleebo/prisma-ast";
 
-export const deleteRelation: Handler<"DELETE", "RELATION", "mutation"> = (prismaState, data) => {
+export const deleteRelation: PrismaQlHandler<"DELETE", "RELATION", "mutation"> = (prismaState, data) => {
     const { args, options } = data;
     const response = handlerResponse(data);
 

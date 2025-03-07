@@ -1,10 +1,10 @@
 import { Field } from "@mrleebo/prisma-ast";
-import { Handler, handlerResponse } from "../../handler-registries/handler-registry.js";
+import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handler-registry.js";
 import { useHelper } from "../../utils/schema-helper.js";
 import boxen from "boxen";
 import chalk from "chalk";
 import Table from "cli-table3";
-export const getFields: Handler<"GET", "FIELDS", "query"> = (prismaState, data) => {
+export const getFields: PrismaQlHandler<"GET", "FIELDS", "query"> = (prismaState, data) => {
     const response = handlerResponse(data);
     const { args } = data;
 
