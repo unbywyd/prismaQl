@@ -1471,683 +1471,6 @@ var init_mutation_handler_registry = __esm({
   }
 });
 
-// src/modules/prehandlers/render-handlers/get-model-names.ts
-var import_chalk4, import_boxen2, formatColumns, sortModelNames, getModelNames;
-var init_get_model_names = __esm({
-  "src/modules/prehandlers/render-handlers/get-model-names.ts"() {
-    import_chalk4 = __toESM(require("chalk"), 1);
-    init_handler_registry();
-    init_schema_helper();
-    import_boxen2 = __toESM(require("boxen"), 1);
-    formatColumns = (items, columns = 2) => {
-      const columnWidth = Math.max(...items.map((name) => name.length)) + 2;
-      const rows = Math.ceil(items.length / columns);
-      let output = "";
-      for (let i = 0; i < rows; i++) {
-        let rowItems = [];
-        for (let j = 0; j < columns; j++) {
-          const index = i + j * rows;
-          if (index < items.length) {
-            rowItems.push(items[index].padEnd(columnWidth));
-          }
-        }
-        output += rowItems.join("  ") + "\n";
-      }
-      return output.trim();
-    };
-    sortModelNames = (modelNames) => {
-      modelNames.sort((a, b) => a.localeCompare(b));
-    };
-    getModelNames = (prismaState, data) => {
-      const response = handlerResponse(data);
-      const models = useHelper(prismaState).getModels();
-      if (models.length === 0) {
-        return response.result(import_chalk4.default.red.bold("\u274C No models in Prisma schema."));
-      }
-      const modelNames = models.map((model) => model.name);
-      sortModelNames(modelNames);
-      const columns = modelNames.length > 6 ? 3 : 2;
-      const stats = `${import_chalk4.default.white("\u{1F4CA} Total models:")} ${import_chalk4.default.white.bold(modelNames.length)}`;
-      const formattedModels = formatColumns(modelNames.map((name) => `${import_chalk4.default.hex("#11FF00")("\u2022")} ${import_chalk4.default.bold(name)}`), columns);
-      return response.result((0, import_boxen2.default)(`${stats}
-
-${formattedModels}`, {
-        padding: 1,
-        margin: 1,
-        borderStyle: "round",
-        borderColor: "cyan",
-        title: "Prisma Models",
-        titleAlignment: "center"
-      }));
-    };
-  }
-});
-
-// src/modules/prehandlers/render-handlers/get-enum-relations.ts
-var import_chalk5, import_boxen3, getEnumRelations;
-var init_get_enum_relations = __esm({
-  "src/modules/prehandlers/render-handlers/get-enum-relations.ts"() {
-    import_chalk5 = __toESM(require("chalk"), 1);
-    init_handler_registry();
-    init_schema_helper();
-    import_boxen3 = __toESM(require("boxen"), 1);
-    init_get_model_names();
-    getEnumRelations = (prismaState, data) => {
-      const response = handlerResponse(data);
-      const helper = useHelper(prismaState);
-      const { args } = data;
-      const enumName = args?.enums?.[0];
-      if (!enumName) {
-        return response.error("No enum name provided. Example usage: GET ENUM_RELATIONS -> [EnumName];");
-      }
-      const _enum = helper.getEnumByName(enumName);
-      if (!_enum) {
-        return response.error(`Enum ${enumName} not found`);
-      }
-      const relations = helper.getEnumRelations(enumName);
-      const total = relations.length;
-      if (!total) {
-        return response.result(`Enum ${enumName} has no relations`);
-      }
-      const columns = relations.length > 6 ? 3 : 2;
-      const formattedModels = formatColumns(relations.map((rel) => `${import_chalk5.default.hex("#11FF00")("\u2022")} ${import_chalk5.default.bold(rel.model.name)} -> ${import_chalk5.default.bold(rel.field.name)}`), columns);
-      const stats = `${import_chalk5.default.white("\u{1F4CA} Total relations:")} ${import_chalk5.default.white.bold(total)}`;
-      return response.result((0, import_boxen3.default)(`${stats}
-
-${formattedModels}`, {
-        padding: 1,
-        margin: 1,
-        borderStyle: "round",
-        borderColor: "green"
-      }));
-    };
-  }
-});
-
-// src/modules/prehandlers/render-handlers/get-enums.ts
-var import_prisma_ast2, import_boxen4, import_prismalux3, import_chalk6, highlightPrismaSchema2, getEnums;
-var init_get_enums = __esm({
-  "src/modules/prehandlers/render-handlers/get-enums.ts"() {
-    import_prisma_ast2 = require("@mrleebo/prisma-ast");
-    init_handler_registry();
-    init_schema_helper();
-    import_boxen4 = __toESM(require("boxen"), 1);
-    import_prismalux3 = require("prismalux");
-    import_chalk6 = __toESM(require("chalk"), 1);
-    highlightPrismaSchema2 = new import_prismalux3.PrismaHighlighter();
-    getEnums = (prismaState, data) => {
-      const response = handlerResponse(data);
-      const options = data.options;
-      const helper = useHelper(prismaState);
-      let enums = helper.getEnums();
-      const onlyEnums = data.args?.enums || [];
-      if (onlyEnums.length && !onlyEnums.includes("*")) {
-        enums = enums.filter((e) => onlyEnums.includes(e.name));
-      }
-      if (!enums.length) {
-        return response.result(import_chalk6.default.yellow(`\u26A0 No enums found`));
-      }
-      const totalEnums = enums.length;
-      const statistic = `\u{1F4CC} Enums in schema: ${import_chalk6.default.bold(totalEnums)}`;
-      if (options?.raw) {
-        const schema = {
-          type: "schema",
-          list: enums
-        };
-        const parsed = (0, import_prisma_ast2.printSchema)(schema);
-        const rawOutput = highlightPrismaSchema2.highlight(parsed);
-        return response.result((0, import_boxen4.default)(`${statistic}
-${rawOutput}`, {
-          padding: 1,
-          width: 100,
-          borderColor: "cyan",
-          title: "Prisma Enums",
-          titleAlignment: "center"
-        }));
-      }
-      const list = [];
-      enums.forEach((e) => {
-        list.push({
-          name: import_chalk6.default.white.bold(e.name),
-          options: e.enumerators?.filter((e2) => e2.type == "enumerator").map((en) => import_chalk6.default.green(en?.name)) || []
-        });
-      });
-      const renderedList = list.map((e) => {
-        return `${e.name}
-${e.options.join(", ")}
-`;
-      });
-      return response.result((0, import_boxen4.default)(`${statistic}
-${renderedList.join("\n")}`, {
-        padding: 1,
-        borderColor: "cyan",
-        title: "Prisma Enums",
-        titleAlignment: "center"
-      }));
-    };
-  }
-});
-
-// src/modules/prehandlers/render-handlers/get-fields.ts
-var import_boxen5, import_chalk7, import_cli_table3, getFields;
-var init_get_fields = __esm({
-  "src/modules/prehandlers/render-handlers/get-fields.ts"() {
-    init_handler_registry();
-    init_schema_helper();
-    import_boxen5 = __toESM(require("boxen"), 1);
-    import_chalk7 = __toESM(require("chalk"), 1);
-    import_cli_table3 = __toESM(require("cli-table3"), 1);
-    getFields = (prismaState, data) => {
-      const response = handlerResponse(data);
-      const { args } = data;
-      const helper = useHelper(prismaState);
-      const modelName = args?.models?.[0];
-      if (!modelName) {
-        return response.error("\u274C No models specified. Usage: GET FIELDS -> [ModelName]; or GET FIELDS [FieldName], [FieldName2] IN -> [ModelName];");
-      }
-      const model = helper.getModelByName(modelName);
-      if (!model) {
-        return response.error(`\u274C Model ${modelName} not found`);
-      }
-      let fields = helper.getFields(modelName);
-      if (!fields.length) {
-        return response.result(import_chalk7.default.yellow(`\u26A0 No fields found in model ${modelName}`));
-      }
-      const onlyFilters = args?.fields || [];
-      if (onlyFilters.length && !onlyFilters.includes("*")) {
-        fields = fields.filter((field) => onlyFilters.includes(field.name));
-      }
-      if (!fields.length) {
-        return response.result(import_chalk7.default.yellow(`\u26A0 No fields found in model ${modelName} that match filters`));
-      }
-      const idField = fields.find((f) => f.attributes?.some((attr) => attr.name === "id"))?.name;
-      const table = new import_cli_table3.default({
-        head: [
-          import_chalk7.default.bold("Field Name"),
-          import_chalk7.default.bold("Type"),
-          import_chalk7.default.bold("Required"),
-          import_chalk7.default.bold("Array"),
-          import_chalk7.default.bold("Relation"),
-          import_chalk7.default.bold("Attributes")
-        ],
-        colWidths: [20, 15, 10, 10, 25, 25],
-        style: { head: ["cyan"] }
-      });
-      const { relations } = prismaState;
-      let relationFields = 0;
-      fields.forEach((field) => {
-        let name = import_chalk7.default.greenBright(field.name);
-        const type = import_chalk7.default.blueBright(field.fieldType);
-        const required = field.optional ? import_chalk7.default.redBright("No") : import_chalk7.default.greenBright("Yes");
-        const array = field.array ? import_chalk7.default.yellowBright("Yes") : import_chalk7.default.gray("No");
-        let hasRelation = field.attributes?.some((attr) => attr.name === "relation");
-        let relation = hasRelation ? import_chalk7.default.magentaBright("Yes") : import_chalk7.default.gray("No");
-        const attrs = ["unique", "id", "default"];
-        const attributes = field.attributes?.filter(
-          (attr) => attrs.includes(attr.name)
-        ).map((attr) => {
-          if (attrs.includes(attr.name) && Array.isArray(attr.args)) {
-            const arg = attr.args[0];
-            if ("string" == typeof arg.value) {
-              return `@${attr.name}(${arg.value})`;
-            }
-            if ("object" == typeof arg.value) {
-              return `@${attr.name}(${arg.value.name}())`;
-            }
-          }
-          return `@${attr.name}`;
-        }).join(", ") || import_chalk7.default.gray("None");
-        for (const rel of relations) {
-          if (rel.modelName === model.name) {
-            if (rel.fieldName === field.name) {
-              relation = import_chalk7.default.magentaBright(rel.relationName);
-              hasRelation = true;
-            }
-            if (rel.foreignKey === field.name) {
-              relation = import_chalk7.default.magenta(`${rel.relationName} (FK)`);
-            }
-          }
-        }
-        if (hasRelation) {
-          relationFields++;
-        }
-        if (field.name == idField) {
-          name = `${import_chalk7.default.bgGreenBright.black(field.name)} (ID)`;
-        }
-        table.push([name, type, required, array, relation, attributes]);
-      });
-      const totalFoundFields = fields.length;
-      const statistic = `
-    \u{1F4CC}Fields in model: ${import_chalk7.default.bold(modelName)}
-    Total fields found: ${import_chalk7.default.bold(totalFoundFields)}
-    Fields with relations: ${import_chalk7.default.bold(relationFields)}
-    `;
-      return response.result((0, import_boxen5.default)(`${statistic}
-${table.toString()}`, {
-        padding: 1,
-        borderColor: "cyan",
-        title: "Prisma Model Fields",
-        titleAlignment: "center"
-      }));
-    };
-  }
-});
-
-// src/modules/prehandlers/render-handlers/get-model.ts
-var import_chalk8, import_prisma_ast3, import_prismalux4, import_boxen6, highlightPrismaSchema3, getModel;
-var init_get_model = __esm({
-  "src/modules/prehandlers/render-handlers/get-model.ts"() {
-    import_chalk8 = __toESM(require("chalk"), 1);
-    init_handler_registry();
-    import_prisma_ast3 = require("@mrleebo/prisma-ast");
-    init_schema_helper();
-    init_field_relation_logger();
-    import_prismalux4 = require("prismalux");
-    init_model_primary_fields();
-    import_boxen6 = __toESM(require("boxen"), 1);
-    highlightPrismaSchema3 = new import_prismalux4.PrismaHighlighter();
-    getModel = (prismaState, data) => {
-      const { args } = data;
-      const response = handlerResponse(data);
-      const modelName = args?.models?.[0];
-      if (!modelName) {
-        return response.error("No model specified. Example usage: GET MODEL ->[ModelName];");
-      }
-      const model = useHelper(prismaState).getModelByName(modelName);
-      if (!model) {
-        return response.error(`Model ${modelName} not found`);
-      }
-      const fields = extractModelSummary(model, prismaState.relations);
-      const { totalRelations } = getRelationStatistics(prismaState.relations, model.name);
-      const schema = {
-        type: "schema",
-        list: [model]
-      };
-      const hSchema = highlightPrismaSchema3.highlight((0, import_prisma_ast3.printSchema)(schema));
-      let output = `${import_chalk8.default.bold.whiteBright("Model:")} ${import_chalk8.default.greenBright(model.name)}
-`;
-      output += `${import_chalk8.default.whiteBright("Relations:")} ${totalRelations > 0 ? `${import_chalk8.default.greenBright(totalRelations)} relations` : import_chalk8.default.redBright("No relations")}
-
-`;
-      const maxFieldLength = Math.max(...fields.map((f) => f.name.length), 5);
-      const maxTypeLength = Math.max(...fields.map((f) => f.type.length), 4);
-      output += import_chalk8.default.underline("Unique Fields:\n");
-      output += fields.map((field) => {
-        const fieldName = field.isId ? import_chalk8.default.bold.red(field.name) : field.isUnique ? import_chalk8.default.bold.yellow(field.name) : import_chalk8.default.white(field.name);
-        const fieldType = field.isRelation ? import_chalk8.default.cyan(field.type) : import_chalk8.default.blueBright(field.type);
-        return `${fieldName.padEnd(maxFieldLength + 2)} ${fieldType.padEnd(
-          maxTypeLength + 2
-        )}`;
-      }).join("\n");
-      output += "\n\n";
-      output += import_chalk8.default.underline("Schema:") + hSchema;
-      return response.result((0, import_boxen6.default)(output, {
-        padding: 1,
-        borderColor: "cyan",
-        borderStyle: "round"
-      }));
-    };
-  }
-});
-
-// src/modules/prehandlers/render-handlers/get-models.ts
-var import_prisma_ast4, import_boxen7, import_prismalux5, import_chalk9, highlightPrismaSchema4, getModels;
-var init_get_models = __esm({
-  "src/modules/prehandlers/render-handlers/get-models.ts"() {
-    import_prisma_ast4 = require("@mrleebo/prisma-ast");
-    init_handler_registry();
-    init_schema_helper();
-    import_boxen7 = __toESM(require("boxen"), 1);
-    import_prismalux5 = require("prismalux");
-    import_chalk9 = __toESM(require("chalk"), 1);
-    highlightPrismaSchema4 = new import_prismalux5.PrismaHighlighter();
-    getModels = (prismaState, data) => {
-      const response = handlerResponse(data);
-      const { args } = data;
-      const models = useHelper(prismaState).getModels(args?.models);
-      const schema = {
-        type: "schema",
-        list: models
-      };
-      const modelCount = models.length;
-      const title = modelCount > 0 ? `\u{1F4CA} Query Result: ${import_chalk9.default.bold(modelCount)} model${modelCount > 1 ? "s" : ""} found:` : `\u274C No models found`;
-      const highlightedSchema = highlightPrismaSchema4.highlight((0, import_prisma_ast4.printSchema)(schema));
-      const output = models?.length ? `
-${title}
-
-${highlightedSchema} 
-        ` : title;
-      const statsBox = (0, import_boxen7.default)(output, {
-        padding: 1,
-        borderColor: modelCount > 0 ? "green" : "red",
-        borderStyle: "round",
-        align: "left"
-      });
-      return response.result(statsBox);
-    };
-  }
-});
-
-// src/modules/prehandlers/render-handlers/get-relations.ts
-var getRelations;
-var init_get_relations = __esm({
-  "src/modules/prehandlers/render-handlers/get-relations.ts"() {
-    init_handler_registry();
-    init_field_relation_logger();
-    init_schema_helper();
-    getRelations = (prismaState, data) => {
-      const response = handlerResponse(data);
-      const helper = useHelper(prismaState);
-      const { options, args } = data;
-      const modelnames = args?.models || [];
-      if (!modelnames.length) {
-        return response.error("You must provide at least one model name. Example: GET RELATIONS [ModelNameA], [ModelNameB]");
-      }
-      const models = helper.getModels();
-      const selectedModels = models.filter((m) => modelnames.includes(m.name));
-      if (!selectedModels.length) {
-        return response.result("No models found");
-      }
-      const results = [];
-      const logger = new FieldRelationLogger(prismaState.relations);
-      for (const model of selectedModels) {
-        const log = logger.generateRelationTreeLog(model.name, options?.depth || 1);
-        results.push(log);
-      }
-      return response.result(results.join("\n"));
-    };
-  }
-});
-
-// src/modules/prehandlers/render-handlers/index.ts
-var render_handlers_exports = {};
-__export(render_handlers_exports, {
-  formatColumns: () => formatColumns,
-  getEnumRelations: () => getEnumRelations,
-  getEnums: () => getEnums,
-  getFields: () => getFields,
-  getModel: () => getModel,
-  getModelNames: () => getModelNames,
-  getModels: () => getModels,
-  getRelations: () => getRelations,
-  sortModelNames: () => sortModelNames
-});
-var init_render_handlers = __esm({
-  "src/modules/prehandlers/render-handlers/index.ts"() {
-    init_get_enum_relations();
-    init_get_enums();
-    init_get_fields();
-    init_get_model_names();
-    init_get_model();
-    init_get_models();
-    init_get_relations();
-  }
-});
-
-// src/modules/prehandlers/json-handlers/get-enum-relations.ts
-var getJsonEnumRelations;
-var init_get_enum_relations2 = __esm({
-  "src/modules/prehandlers/json-handlers/get-enum-relations.ts"() {
-    init_handler_registry();
-    init_schema_helper();
-    getJsonEnumRelations = (prismaState, data) => {
-      const response = handlerResponse(data);
-      const helper = useHelper(prismaState);
-      const { args } = data;
-      const enumName = args?.enums?.[0];
-      if (!enumName) {
-        return response.error("No enum name provided. Example usage: GET ENUM_RELATIONS -> [EnumName];");
-      }
-      const _enum = helper.getEnumByName(enumName);
-      if (!_enum) {
-        return response.error(`Enum ${enumName} not found`);
-      }
-      const relations = helper.getEnumRelations(enumName);
-      const total = relations.length;
-      if (!total) {
-        return response.result({
-          total: 0,
-          relations: []
-        });
-      }
-      return response.result({
-        total,
-        relations
-      });
-    };
-  }
-});
-
-// src/modules/prehandlers/json-handlers/get-enums.ts
-var getJsonEnums;
-var init_get_enums2 = __esm({
-  "src/modules/prehandlers/json-handlers/get-enums.ts"() {
-    init_handler_registry();
-    init_schema_helper();
-    getJsonEnums = (prismaState, data) => {
-      const response = handlerResponse(data);
-      const helper = useHelper(prismaState);
-      let enums = helper.getEnums();
-      const onlyEnums = data.args?.enums || [];
-      if (onlyEnums.length && !onlyEnums.includes("*")) {
-        enums = enums.filter((e) => onlyEnums.includes(e.name));
-      }
-      if (!enums.length) {
-        return response.result({
-          total: 0,
-          enums: []
-        });
-      }
-      const totalEnums = enums.length;
-      const list = [];
-      enums.forEach((e) => {
-        list.push({
-          name: e.name,
-          options: e.enumerators?.filter((e2) => e2.type == "enumerator").map((en) => en.name) || []
-        });
-      });
-      return response.result({
-        total: totalEnums,
-        enums: list
-      });
-    };
-  }
-});
-
-// src/modules/prehandlers/json-handlers/get-fields.ts
-var getJsonFields;
-var init_get_fields2 = __esm({
-  "src/modules/prehandlers/json-handlers/get-fields.ts"() {
-    init_handler_registry();
-    init_schema_helper();
-    getJsonFields = (prismaState, data) => {
-      const response = handlerResponse(data);
-      const { args } = data;
-      const helper = useHelper(prismaState);
-      const modelName = args?.models?.[0];
-      if (!modelName) {
-        return response.error("\u274C No models specified. Usage: GET FIELDS -> [ModelName]; or GET FIELDS [FieldName], [FieldName2] IN -> [ModelName];");
-      }
-      const model = helper.getModelByName(modelName);
-      if (!model) {
-        return response.error(`\u274C Model ${modelName} not found`);
-      }
-      let fields = helper.getFields(modelName);
-      if (!fields.length) {
-        return response.result({
-          fields: [],
-          total: 0
-        });
-      }
-      const onlyFilters = args?.fields || [];
-      if (onlyFilters.length && !onlyFilters.includes("*")) {
-        fields = fields.filter((field) => onlyFilters.includes(field.name));
-      }
-      if (!fields.length) {
-        return response.result({
-          fields: [],
-          total: 0
-        });
-      }
-      const relationFields = fields.filter((field) => field.attributes?.some((attr) => attr.name === "relation")).length;
-      return response.result({
-        fields,
-        total: relationFields
-      });
-    };
-  }
-});
-
-// src/modules/prehandlers/json-handlers/get-model-names.ts
-var sortModelNames2, getJsonModelNames;
-var init_get_model_names2 = __esm({
-  "src/modules/prehandlers/json-handlers/get-model-names.ts"() {
-    init_handler_registry();
-    init_schema_helper();
-    sortModelNames2 = (modelNames) => {
-      modelNames.sort((a, b) => a.localeCompare(b));
-    };
-    getJsonModelNames = (prismaState, data) => {
-      const response = handlerResponse(data);
-      const models = useHelper(prismaState).getModels();
-      if (models.length === 0) {
-        return response.result({
-          total: 0,
-          models: []
-        });
-      }
-      const modelNames = models.map((model) => model.name);
-      sortModelNames2(modelNames);
-      return response.result({
-        total: modelNames.length,
-        models: modelNames
-      });
-    };
-  }
-});
-
-// src/modules/prehandlers/json-handlers/get-model.ts
-var import_prisma_ast5, getJsonModel;
-var init_get_model2 = __esm({
-  "src/modules/prehandlers/json-handlers/get-model.ts"() {
-    init_handler_registry();
-    import_prisma_ast5 = require("@mrleebo/prisma-ast");
-    init_schema_helper();
-    init_field_relation_logger();
-    init_model_primary_fields();
-    getJsonModel = (prismaState, data) => {
-      const { args } = data;
-      const response = handlerResponse(data);
-      const modelName = args?.models?.[0];
-      if (!modelName) {
-        return response.error("No model specified. Example usage: GET MODEL ->[ModelName];");
-      }
-      const model = useHelper(prismaState).getModelByName(modelName);
-      if (!model) {
-        return response.error(`Model ${modelName} not found`);
-      }
-      const fields = extractModelSummary(model, prismaState.relations);
-      const { totalRelations } = getRelationStatistics(prismaState.relations, model.name);
-      const schema = {
-        type: "schema",
-        list: [model]
-      };
-      return response.result({
-        model,
-        schema: (0, import_prisma_ast5.printSchema)(schema),
-        requiredFields: fields,
-        totalRelations
-      });
-    };
-  }
-});
-
-// src/modules/prehandlers/json-handlers/get-models.ts
-var import_prisma_ast6, getJsonModels;
-var init_get_models2 = __esm({
-  "src/modules/prehandlers/json-handlers/get-models.ts"() {
-    import_prisma_ast6 = require("@mrleebo/prisma-ast");
-    init_handler_registry();
-    init_schema_helper();
-    getJsonModels = (prismaState, data) => {
-      const response = handlerResponse(data);
-      const { args } = data;
-      const models = useHelper(prismaState).getModels(args?.models);
-      const schema = {
-        type: "schema",
-        list: models
-      };
-      const modelCount = models.length;
-      return response.result({
-        total: modelCount,
-        models,
-        schema: (0, import_prisma_ast6.printSchema)(schema)
-      });
-    };
-  }
-});
-
-// src/modules/prehandlers/json-handlers/get-relations.ts
-var getJsonRelations;
-var init_get_relations2 = __esm({
-  "src/modules/prehandlers/json-handlers/get-relations.ts"() {
-    init_handler_registry();
-    init_field_relation_logger();
-    init_schema_helper();
-    getJsonRelations = (prismaState, data) => {
-      const response = handlerResponse(data);
-      const helper = useHelper(prismaState);
-      const { options, args } = data;
-      const modelnames = args?.models || [];
-      if (!modelnames.length) {
-        return response.error("You must provide at least one model name. Example: GET RELATIONS [ModelNameA], [ModelNameB]");
-      }
-      const models = helper.getModels();
-      const selectedModels = models.filter((m) => modelnames.includes(m.name));
-      if (!selectedModels.length) {
-        return response.result({
-          total: 0,
-          results: []
-        });
-      }
-      const results = [];
-      const logger = new FieldRelationLogger(prismaState.relations);
-      for (const model of selectedModels) {
-        const log = logger.buildJsonModelTrees(model.name, prismaState.relations, options?.depth || 1);
-        results.push(log);
-      }
-      return response.result({
-        results,
-        total: results.length
-      });
-    };
-  }
-});
-
-// src/modules/prehandlers/json-handlers/index.ts
-var json_handlers_exports = {};
-__export(json_handlers_exports, {
-  getJsonEnumRelations: () => getJsonEnumRelations,
-  getJsonEnums: () => getJsonEnums,
-  getJsonFields: () => getJsonFields,
-  getJsonModel: () => getJsonModel,
-  getJsonModelNames: () => getJsonModelNames,
-  getJsonModels: () => getJsonModels,
-  getJsonRelations: () => getJsonRelations,
-  sortModelNames: () => sortModelNames2
-});
-var init_json_handlers = __esm({
-  "src/modules/prehandlers/json-handlers/index.ts"() {
-    init_get_enum_relations2();
-    init_get_enums2();
-    init_get_fields2();
-    init_get_model_names2();
-    init_get_model2();
-    init_get_models2();
-    init_get_relations2();
-  }
-});
-
 // src/modules/prehandlers/mutation-handlers/add-enum.ts
 var import_change_case2, addEnum;
 var init_add_enum = __esm({
@@ -2187,10 +1510,10 @@ var init_add_enum = __esm({
 });
 
 // src/modules/prehandlers/mutation-handlers/add-field.ts
-var import_prisma_ast7, addField;
+var import_prisma_ast2, addField;
 var init_add_field = __esm({
   "src/modules/prehandlers/mutation-handlers/add-field.ts"() {
-    import_prisma_ast7 = require("@mrleebo/prisma-ast");
+    import_prisma_ast2 = require("@mrleebo/prisma-ast");
     init_handler_registry();
     init_schema_helper();
     addField = (prismaState, data) => {
@@ -2220,7 +1543,7 @@ var init_add_field = __esm({
     }`;
       let parsed;
       try {
-        parsed = (0, import_prisma_ast7.getSchema)(sourceField);
+        parsed = (0, import_prisma_ast2.getSchema)(sourceField);
       } catch (error) {
         return response.error(`Error parsing field: ${error.message}`);
       }
@@ -2249,10 +1572,10 @@ var init_add_field = __esm({
 });
 
 // src/modules/prehandlers/mutation-handlers/add-model.ts
-var import_prisma_ast8, addModel;
+var import_prisma_ast3, addModel;
 var init_add_model = __esm({
   "src/modules/prehandlers/mutation-handlers/add-model.ts"() {
-    import_prisma_ast8 = require("@mrleebo/prisma-ast");
+    import_prisma_ast3 = require("@mrleebo/prisma-ast");
     init_handler_registry();
     init_schema_helper();
     addModel = (prismaState, data) => {
@@ -2289,7 +1612,7 @@ var init_add_model = __esm({
         ${prismaBlock || "id Int @id"}
         }`;
         try {
-          parsed = (0, import_prisma_ast8.getSchema)(sourceModel);
+          parsed = (0, import_prisma_ast3.getSchema)(sourceModel);
         } catch (error) {
           return response.error(`Invalid block provided. Error parsing model: ${error.message}`);
         }
@@ -2621,10 +1944,10 @@ var init_delete_model = __esm({
 });
 
 // src/modules/prehandlers/mutation-handlers/delete-relations.ts
-var import_chalk10, deleteRelation;
+var import_chalk4, deleteRelation;
 var init_delete_relations = __esm({
   "src/modules/prehandlers/mutation-handlers/delete-relations.ts"() {
-    import_chalk10 = __toESM(require("chalk"), 1);
+    import_chalk4 = __toESM(require("chalk"), 1);
     init_handler_registry();
     deleteRelation = (prismaState, data) => {
       const { args, options } = data;
@@ -2649,7 +1972,7 @@ var init_delete_relations = __esm({
         return response.error(`Field ${fieldA} specified for ${modelA} but no field specified for ${modelB}`);
       }
       if (options?.relationName) {
-        console.log(import_chalk10.default.yellow(`Relation name is specified. Attempting to remove relation by name`));
+        console.log(import_chalk4.default.yellow(`Relation name is specified. Attempting to remove relation by name`));
         const fieldsA = modelARef.properties.filter(
           (prop) => prop.type === "field" && (prop.fieldType === modelB || prop.fieldType === modelA)
         );
@@ -2685,7 +2008,7 @@ var init_delete_relations = __esm({
         return response.result(`Relation ${options.relationName} removed between ${modelA} and ${modelB}`);
       }
       if (!fieldA && !fieldB) {
-        console.log(import_chalk10.default.yellow(`No fields specified. Attempting to remove all relations between ${modelA} and ${modelB}`));
+        console.log(import_chalk4.default.yellow(`No fields specified. Attempting to remove all relations between ${modelA} and ${modelB}`));
         const fieldsToRemoveA = modelARef.properties.filter(
           (prop) => prop.type === "field" && prop.fieldType === modelB
         );
@@ -2775,10 +2098,10 @@ var init_update_enum = __esm({
 });
 
 // src/modules/prehandlers/mutation-handlers/update-field.ts
-var import_prisma_ast9, updateField;
+var import_prisma_ast4, updateField;
 var init_update_field = __esm({
   "src/modules/prehandlers/mutation-handlers/update-field.ts"() {
-    import_prisma_ast9 = require("@mrleebo/prisma-ast");
+    import_prisma_ast4 = require("@mrleebo/prisma-ast");
     init_handler_registry();
     init_schema_helper();
     updateField = (prismaState, data) => {
@@ -2808,7 +2131,7 @@ var init_update_field = __esm({
         ${fieldName} ${data.prismaBlock}
     }`;
       try {
-        parsed = (0, import_prisma_ast9.getSchema)(sourceField);
+        parsed = (0, import_prisma_ast4.getSchema)(sourceField);
       } catch (error) {
         return response.error("There is likely an issue with the block. The block should contain Prisma field attributes including the type, but without the field name. Example: 'String @default('test')'");
       }
@@ -2831,35 +2154,6 @@ var init_update_field = __esm({
       }
       return response.result(`Field ${fieldName} added to model ${modelName}`);
     };
-  }
-});
-
-// src/modules/prehandlers/mutation-handlers/index.ts
-var mutation_handlers_exports = {};
-__export(mutation_handlers_exports, {
-  addEnum: () => addEnum,
-  addField: () => addField,
-  addModel: () => addModel,
-  addRelation: () => addRelation,
-  deleteEnum: () => deleteEnum,
-  deleteField: () => deleteField,
-  deleteModel: () => deleteModel,
-  deleteRelation: () => deleteRelation,
-  updateEnum: () => updateEnum,
-  updateField: () => updateField
-});
-var init_mutation_handlers = __esm({
-  "src/modules/prehandlers/mutation-handlers/index.ts"() {
-    init_add_enum();
-    init_add_field();
-    init_add_model();
-    init_add_relation();
-    init_delete_enum();
-    init_delete_field();
-    init_delete_model();
-    init_delete_relations();
-    init_update_enum();
-    init_update_field();
   }
 });
 
@@ -2896,6 +2190,394 @@ var init_mutation_handler = __esm({
   }
 });
 
+// src/modules/prehandlers/render-handlers/get-model-names.ts
+var import_chalk5, import_boxen2, formatColumns, sortModelNames, getModelNames;
+var init_get_model_names = __esm({
+  "src/modules/prehandlers/render-handlers/get-model-names.ts"() {
+    import_chalk5 = __toESM(require("chalk"), 1);
+    init_handler_registry();
+    init_schema_helper();
+    import_boxen2 = __toESM(require("boxen"), 1);
+    formatColumns = (items, columns = 2) => {
+      const columnWidth = Math.max(...items.map((name) => name.length)) + 2;
+      const rows = Math.ceil(items.length / columns);
+      let output = "";
+      for (let i = 0; i < rows; i++) {
+        let rowItems = [];
+        for (let j = 0; j < columns; j++) {
+          const index = i + j * rows;
+          if (index < items.length) {
+            rowItems.push(items[index].padEnd(columnWidth));
+          }
+        }
+        output += rowItems.join("  ") + "\n";
+      }
+      return output.trim();
+    };
+    sortModelNames = (modelNames) => {
+      modelNames.sort((a, b) => a.localeCompare(b));
+    };
+    getModelNames = (prismaState, data) => {
+      const response = handlerResponse(data);
+      const models = useHelper(prismaState).getModels();
+      if (models.length === 0) {
+        return response.result(import_chalk5.default.red.bold("\u274C No models in Prisma schema."));
+      }
+      const modelNames = models.map((model) => model.name);
+      sortModelNames(modelNames);
+      const columns = modelNames.length > 6 ? 3 : 2;
+      const stats = `${import_chalk5.default.white("\u{1F4CA} Total models:")} ${import_chalk5.default.white.bold(modelNames.length)}`;
+      const formattedModels = formatColumns(modelNames.map((name) => `${import_chalk5.default.hex("#11FF00")("\u2022")} ${import_chalk5.default.bold(name)}`), columns);
+      return response.result((0, import_boxen2.default)(`${stats}
+
+${formattedModels}`, {
+        padding: 1,
+        margin: 1,
+        borderStyle: "round",
+        borderColor: "cyan",
+        title: "Prisma Models",
+        titleAlignment: "center"
+      }));
+    };
+  }
+});
+
+// src/modules/prehandlers/render-handlers/get-enum-relations.ts
+var import_chalk6, import_boxen3, getEnumRelations;
+var init_get_enum_relations = __esm({
+  "src/modules/prehandlers/render-handlers/get-enum-relations.ts"() {
+    import_chalk6 = __toESM(require("chalk"), 1);
+    init_handler_registry();
+    init_schema_helper();
+    import_boxen3 = __toESM(require("boxen"), 1);
+    init_get_model_names();
+    getEnumRelations = (prismaState, data) => {
+      const response = handlerResponse(data);
+      const helper = useHelper(prismaState);
+      const { args } = data;
+      const enumName = args?.enums?.[0];
+      if (!enumName) {
+        return response.error("No enum name provided. Example usage: GET ENUM_RELATIONS -> [EnumName];");
+      }
+      const _enum = helper.getEnumByName(enumName);
+      if (!_enum) {
+        return response.error(`Enum ${enumName} not found`);
+      }
+      const relations = helper.getEnumRelations(enumName);
+      const total = relations.length;
+      if (!total) {
+        return response.result(`Enum ${enumName} has no relations`);
+      }
+      const columns = relations.length > 6 ? 3 : 2;
+      const formattedModels = formatColumns(relations.map((rel) => `${import_chalk6.default.hex("#11FF00")("\u2022")} ${import_chalk6.default.bold(rel.model.name)} -> ${import_chalk6.default.bold(rel.field.name)}`), columns);
+      const stats = `${import_chalk6.default.white("\u{1F4CA} Total relations:")} ${import_chalk6.default.white.bold(total)}`;
+      return response.result((0, import_boxen3.default)(`${stats}
+
+${formattedModels}`, {
+        padding: 1,
+        margin: 1,
+        borderStyle: "round",
+        borderColor: "green"
+      }));
+    };
+  }
+});
+
+// src/modules/prehandlers/render-handlers/get-enums.ts
+var import_prisma_ast5, import_boxen4, import_prismalux3, import_chalk7, highlightPrismaSchema2, getEnums;
+var init_get_enums = __esm({
+  "src/modules/prehandlers/render-handlers/get-enums.ts"() {
+    import_prisma_ast5 = require("@mrleebo/prisma-ast");
+    init_handler_registry();
+    init_schema_helper();
+    import_boxen4 = __toESM(require("boxen"), 1);
+    import_prismalux3 = require("prismalux");
+    import_chalk7 = __toESM(require("chalk"), 1);
+    highlightPrismaSchema2 = new import_prismalux3.PrismaHighlighter();
+    getEnums = (prismaState, data) => {
+      const response = handlerResponse(data);
+      const options = data.options;
+      const helper = useHelper(prismaState);
+      let enums = helper.getEnums();
+      const onlyEnums = data.args?.enums || [];
+      if (onlyEnums.length && !onlyEnums.includes("*")) {
+        enums = enums.filter((e) => onlyEnums.includes(e.name));
+      }
+      if (!enums.length) {
+        return response.result(import_chalk7.default.yellow(`\u26A0 No enums found`));
+      }
+      const totalEnums = enums.length;
+      const statistic = `\u{1F4CC} Enums in schema: ${import_chalk7.default.bold(totalEnums)}`;
+      if (options?.raw) {
+        const schema = {
+          type: "schema",
+          list: enums
+        };
+        const parsed = (0, import_prisma_ast5.printSchema)(schema);
+        const rawOutput = highlightPrismaSchema2.highlight(parsed);
+        return response.result((0, import_boxen4.default)(`${statistic}
+${rawOutput}`, {
+          padding: 1,
+          width: 100,
+          borderColor: "cyan",
+          title: "Prisma Enums",
+          titleAlignment: "center"
+        }));
+      }
+      const list = [];
+      enums.forEach((e) => {
+        list.push({
+          name: import_chalk7.default.white.bold(e.name),
+          options: e.enumerators?.filter((e2) => e2.type == "enumerator").map((en) => import_chalk7.default.green(en?.name)) || []
+        });
+      });
+      const renderedList = list.map((e) => {
+        return `${e.name}
+${e.options.join(", ")}
+`;
+      });
+      return response.result((0, import_boxen4.default)(`${statistic}
+${renderedList.join("\n")}`, {
+        padding: 1,
+        borderColor: "cyan",
+        title: "Prisma Enums",
+        titleAlignment: "center"
+      }));
+    };
+  }
+});
+
+// src/modules/prehandlers/render-handlers/get-fields.ts
+var import_boxen5, import_chalk8, import_cli_table3, getFields;
+var init_get_fields = __esm({
+  "src/modules/prehandlers/render-handlers/get-fields.ts"() {
+    init_handler_registry();
+    init_schema_helper();
+    import_boxen5 = __toESM(require("boxen"), 1);
+    import_chalk8 = __toESM(require("chalk"), 1);
+    import_cli_table3 = __toESM(require("cli-table3"), 1);
+    getFields = (prismaState, data) => {
+      const response = handlerResponse(data);
+      const { args } = data;
+      const helper = useHelper(prismaState);
+      const modelName = args?.models?.[0];
+      if (!modelName) {
+        return response.error("\u274C No models specified. Usage: GET FIELDS -> [ModelName]; or GET FIELDS [FieldName], [FieldName2] IN -> [ModelName];");
+      }
+      const model = helper.getModelByName(modelName);
+      if (!model) {
+        return response.error(`\u274C Model ${modelName} not found`);
+      }
+      let fields = helper.getFields(modelName);
+      if (!fields.length) {
+        return response.result(import_chalk8.default.yellow(`\u26A0 No fields found in model ${modelName}`));
+      }
+      const onlyFilters = args?.fields || [];
+      if (onlyFilters.length && !onlyFilters.includes("*")) {
+        fields = fields.filter((field) => onlyFilters.includes(field.name));
+      }
+      if (!fields.length) {
+        return response.result(import_chalk8.default.yellow(`\u26A0 No fields found in model ${modelName} that match filters`));
+      }
+      const idField = fields.find((f) => f.attributes?.some((attr) => attr.name === "id"))?.name;
+      const table = new import_cli_table3.default({
+        head: [
+          import_chalk8.default.bold("Field Name"),
+          import_chalk8.default.bold("Type"),
+          import_chalk8.default.bold("Required"),
+          import_chalk8.default.bold("Array"),
+          import_chalk8.default.bold("Relation"),
+          import_chalk8.default.bold("Attributes")
+        ],
+        colWidths: [20, 15, 10, 10, 25, 25],
+        style: { head: ["cyan"] }
+      });
+      const { relations } = prismaState;
+      let relationFields = 0;
+      fields.forEach((field) => {
+        let name = import_chalk8.default.greenBright(field.name);
+        const type = import_chalk8.default.blueBright(field.fieldType);
+        const required = field.optional ? import_chalk8.default.redBright("No") : import_chalk8.default.greenBright("Yes");
+        const array = field.array ? import_chalk8.default.yellowBright("Yes") : import_chalk8.default.gray("No");
+        let hasRelation = field.attributes?.some((attr) => attr.name === "relation");
+        let relation = hasRelation ? import_chalk8.default.magentaBright("Yes") : import_chalk8.default.gray("No");
+        const attrs = ["unique", "id", "default"];
+        const attributes = field.attributes?.filter(
+          (attr) => attrs.includes(attr.name)
+        ).map((attr) => {
+          if (attrs.includes(attr.name) && Array.isArray(attr.args)) {
+            const arg = attr.args[0];
+            if ("string" == typeof arg.value) {
+              return `@${attr.name}(${arg.value})`;
+            }
+            if ("object" == typeof arg.value) {
+              return `@${attr.name}(${arg.value.name}())`;
+            }
+          }
+          return `@${attr.name}`;
+        }).join(", ") || import_chalk8.default.gray("None");
+        for (const rel of relations) {
+          if (rel.modelName === model.name) {
+            if (rel.fieldName === field.name) {
+              relation = import_chalk8.default.magentaBright(rel.relationName);
+              hasRelation = true;
+            }
+            if (rel.foreignKey === field.name) {
+              relation = import_chalk8.default.magenta(`${rel.relationName} (FK)`);
+            }
+          }
+        }
+        if (hasRelation) {
+          relationFields++;
+        }
+        if (field.name == idField) {
+          name = `${import_chalk8.default.bgGreenBright.black(field.name)} (ID)`;
+        }
+        table.push([name, type, required, array, relation, attributes]);
+      });
+      const totalFoundFields = fields.length;
+      const statistic = `
+    \u{1F4CC}Fields in model: ${import_chalk8.default.bold(modelName)}
+    Total fields found: ${import_chalk8.default.bold(totalFoundFields)}
+    Fields with relations: ${import_chalk8.default.bold(relationFields)}
+    `;
+      return response.result((0, import_boxen5.default)(`${statistic}
+${table.toString()}`, {
+        padding: 1,
+        borderColor: "cyan",
+        title: "Prisma Model Fields",
+        titleAlignment: "center"
+      }));
+    };
+  }
+});
+
+// src/modules/prehandlers/render-handlers/get-model.ts
+var import_chalk9, import_prisma_ast6, import_prismalux4, import_boxen6, highlightPrismaSchema3, getModel;
+var init_get_model = __esm({
+  "src/modules/prehandlers/render-handlers/get-model.ts"() {
+    import_chalk9 = __toESM(require("chalk"), 1);
+    init_handler_registry();
+    import_prisma_ast6 = require("@mrleebo/prisma-ast");
+    init_schema_helper();
+    init_field_relation_logger();
+    import_prismalux4 = require("prismalux");
+    init_model_primary_fields();
+    import_boxen6 = __toESM(require("boxen"), 1);
+    highlightPrismaSchema3 = new import_prismalux4.PrismaHighlighter();
+    getModel = (prismaState, data) => {
+      const { args } = data;
+      const response = handlerResponse(data);
+      const modelName = args?.models?.[0];
+      if (!modelName) {
+        return response.error("No model specified. Example usage: GET MODEL ->[ModelName];");
+      }
+      const model = useHelper(prismaState).getModelByName(modelName);
+      if (!model) {
+        return response.error(`Model ${modelName} not found`);
+      }
+      const fields = extractModelSummary(model, prismaState.relations);
+      const { totalRelations } = getRelationStatistics(prismaState.relations, model.name);
+      const schema = {
+        type: "schema",
+        list: [model]
+      };
+      const hSchema = highlightPrismaSchema3.highlight((0, import_prisma_ast6.printSchema)(schema));
+      let output = `${import_chalk9.default.bold.whiteBright("Model:")} ${import_chalk9.default.greenBright(model.name)}
+`;
+      output += `${import_chalk9.default.whiteBright("Relations:")} ${totalRelations > 0 ? `${import_chalk9.default.greenBright(totalRelations)} relations` : import_chalk9.default.redBright("No relations")}
+
+`;
+      const maxFieldLength = Math.max(...fields.map((f) => f.name.length), 5);
+      const maxTypeLength = Math.max(...fields.map((f) => f.type.length), 4);
+      output += import_chalk9.default.underline("Unique Fields:\n");
+      output += fields.map((field) => {
+        const fieldName = field.isId ? import_chalk9.default.bold.red(field.name) : field.isUnique ? import_chalk9.default.bold.yellow(field.name) : import_chalk9.default.white(field.name);
+        const fieldType = field.isRelation ? import_chalk9.default.cyan(field.type) : import_chalk9.default.blueBright(field.type);
+        return `${fieldName.padEnd(maxFieldLength + 2)} ${fieldType.padEnd(
+          maxTypeLength + 2
+        )}`;
+      }).join("\n");
+      output += "\n\n";
+      output += import_chalk9.default.underline("Schema:") + hSchema;
+      return response.result((0, import_boxen6.default)(output, {
+        padding: 1,
+        borderColor: "cyan",
+        borderStyle: "round"
+      }));
+    };
+  }
+});
+
+// src/modules/prehandlers/render-handlers/get-models.ts
+var import_prisma_ast7, import_boxen7, import_prismalux5, import_chalk10, highlightPrismaSchema4, getModels;
+var init_get_models = __esm({
+  "src/modules/prehandlers/render-handlers/get-models.ts"() {
+    import_prisma_ast7 = require("@mrleebo/prisma-ast");
+    init_handler_registry();
+    init_schema_helper();
+    import_boxen7 = __toESM(require("boxen"), 1);
+    import_prismalux5 = require("prismalux");
+    import_chalk10 = __toESM(require("chalk"), 1);
+    highlightPrismaSchema4 = new import_prismalux5.PrismaHighlighter();
+    getModels = (prismaState, data) => {
+      const response = handlerResponse(data);
+      const { args } = data;
+      const models = useHelper(prismaState).getModels(args?.models);
+      const schema = {
+        type: "schema",
+        list: models
+      };
+      const modelCount = models.length;
+      const title = modelCount > 0 ? `\u{1F4CA} Query Result: ${import_chalk10.default.bold(modelCount)} model${modelCount > 1 ? "s" : ""} found:` : `\u274C No models found`;
+      const highlightedSchema = highlightPrismaSchema4.highlight((0, import_prisma_ast7.printSchema)(schema));
+      const output = models?.length ? `
+${title}
+
+${highlightedSchema} 
+        ` : title;
+      const statsBox = (0, import_boxen7.default)(output, {
+        padding: 1,
+        borderColor: modelCount > 0 ? "green" : "red",
+        borderStyle: "round",
+        align: "left"
+      });
+      return response.result(statsBox);
+    };
+  }
+});
+
+// src/modules/prehandlers/render-handlers/get-relations.ts
+var getRelations;
+var init_get_relations = __esm({
+  "src/modules/prehandlers/render-handlers/get-relations.ts"() {
+    init_handler_registry();
+    init_field_relation_logger();
+    init_schema_helper();
+    getRelations = (prismaState, data) => {
+      const response = handlerResponse(data);
+      const helper = useHelper(prismaState);
+      const { options, args } = data;
+      const modelnames = args?.models || [];
+      if (!modelnames.length) {
+        return response.error("You must provide at least one model name. Example: GET RELATIONS [ModelNameA], [ModelNameB]");
+      }
+      const models = helper.getModels();
+      const selectedModels = models.filter((m) => modelnames.includes(m.name));
+      if (!selectedModels.length) {
+        return response.result("No models found");
+      }
+      const results = [];
+      const logger = new FieldRelationLogger(prismaState.relations);
+      for (const model of selectedModels) {
+        const log = logger.generateRelationTreeLog(model.name, options?.depth || 1);
+        results.push(log);
+      }
+      return response.result(results.join("\n"));
+    };
+  }
+});
+
 // src/modules/handlers/query-render-handler.ts
 var query_render_handler_exports = {};
 __export(query_render_handler_exports, {
@@ -2920,6 +2602,212 @@ var init_query_render_handler = __esm({
     queryHandler.register("GET", "MODELS_LIST", getModelNames);
     queryHandler.register("GET", "RELATIONS", getRelations);
     queryHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
+  }
+});
+
+// src/modules/prehandlers/json-handlers/get-enums.ts
+var getJsonEnums;
+var init_get_enums2 = __esm({
+  "src/modules/prehandlers/json-handlers/get-enums.ts"() {
+    init_handler_registry();
+    init_schema_helper();
+    getJsonEnums = (prismaState, data) => {
+      const response = handlerResponse(data);
+      const helper = useHelper(prismaState);
+      let enums = helper.getEnums();
+      const onlyEnums = data.args?.enums || [];
+      if (onlyEnums.length && !onlyEnums.includes("*")) {
+        enums = enums.filter((e) => onlyEnums.includes(e.name));
+      }
+      if (!enums.length) {
+        return response.result({
+          total: 0,
+          enums: []
+        });
+      }
+      const totalEnums = enums.length;
+      const list = [];
+      enums.forEach((e) => {
+        list.push({
+          name: e.name,
+          options: e.enumerators?.filter((e2) => e2.type == "enumerator").map((en) => en.name) || []
+        });
+      });
+      return response.result({
+        total: totalEnums,
+        enums: list
+      });
+    };
+  }
+});
+
+// src/modules/prehandlers/json-handlers/get-fields.ts
+var getJsonFields;
+var init_get_fields2 = __esm({
+  "src/modules/prehandlers/json-handlers/get-fields.ts"() {
+    init_handler_registry();
+    init_schema_helper();
+    getJsonFields = (prismaState, data) => {
+      const response = handlerResponse(data);
+      const { args } = data;
+      const helper = useHelper(prismaState);
+      const modelName = args?.models?.[0];
+      if (!modelName) {
+        return response.error("\u274C No models specified. Usage: GET FIELDS -> [ModelName]; or GET FIELDS [FieldName], [FieldName2] IN -> [ModelName];");
+      }
+      const model = helper.getModelByName(modelName);
+      if (!model) {
+        return response.error(`\u274C Model ${modelName} not found`);
+      }
+      let fields = helper.getFields(modelName);
+      if (!fields.length) {
+        return response.result({
+          fields: [],
+          total: 0
+        });
+      }
+      const onlyFilters = args?.fields || [];
+      if (onlyFilters.length && !onlyFilters.includes("*")) {
+        fields = fields.filter((field) => onlyFilters.includes(field.name));
+      }
+      if (!fields.length) {
+        return response.result({
+          fields: [],
+          total: 0
+        });
+      }
+      const relationFields = fields.filter((field) => field.attributes?.some((attr) => attr.name === "relation")).length;
+      return response.result({
+        fields,
+        total: relationFields
+      });
+    };
+  }
+});
+
+// src/modules/prehandlers/json-handlers/get-model-names.ts
+var sortModelNames2, getJsonModelNames;
+var init_get_model_names2 = __esm({
+  "src/modules/prehandlers/json-handlers/get-model-names.ts"() {
+    init_handler_registry();
+    init_schema_helper();
+    sortModelNames2 = (modelNames) => {
+      modelNames.sort((a, b) => a.localeCompare(b));
+    };
+    getJsonModelNames = (prismaState, data) => {
+      const response = handlerResponse(data);
+      const models = useHelper(prismaState).getModels();
+      if (models.length === 0) {
+        return response.result({
+          total: 0,
+          models: []
+        });
+      }
+      const modelNames = models.map((model) => model.name);
+      sortModelNames2(modelNames);
+      return response.result({
+        total: modelNames.length,
+        models: modelNames
+      });
+    };
+  }
+});
+
+// src/modules/prehandlers/json-handlers/get-model.ts
+var import_prisma_ast8, getJsonModel;
+var init_get_model2 = __esm({
+  "src/modules/prehandlers/json-handlers/get-model.ts"() {
+    init_handler_registry();
+    import_prisma_ast8 = require("@mrleebo/prisma-ast");
+    init_schema_helper();
+    init_field_relation_logger();
+    init_model_primary_fields();
+    getJsonModel = (prismaState, data) => {
+      const { args } = data;
+      const response = handlerResponse(data);
+      const modelName = args?.models?.[0];
+      if (!modelName) {
+        return response.error("No model specified. Example usage: GET MODEL ->[ModelName];");
+      }
+      const model = useHelper(prismaState).getModelByName(modelName);
+      if (!model) {
+        return response.error(`Model ${modelName} not found`);
+      }
+      const fields = extractModelSummary(model, prismaState.relations);
+      const { totalRelations } = getRelationStatistics(prismaState.relations, model.name);
+      const schema = {
+        type: "schema",
+        list: [model]
+      };
+      return response.result({
+        model,
+        schema: (0, import_prisma_ast8.printSchema)(schema),
+        requiredFields: fields,
+        totalRelations
+      });
+    };
+  }
+});
+
+// src/modules/prehandlers/json-handlers/get-models.ts
+var import_prisma_ast9, getJsonModels;
+var init_get_models2 = __esm({
+  "src/modules/prehandlers/json-handlers/get-models.ts"() {
+    import_prisma_ast9 = require("@mrleebo/prisma-ast");
+    init_handler_registry();
+    init_schema_helper();
+    getJsonModels = (prismaState, data) => {
+      const response = handlerResponse(data);
+      const { args } = data;
+      const models = useHelper(prismaState).getModels(args?.models);
+      const schema = {
+        type: "schema",
+        list: models
+      };
+      const modelCount = models.length;
+      return response.result({
+        total: modelCount,
+        models,
+        schema: (0, import_prisma_ast9.printSchema)(schema)
+      });
+    };
+  }
+});
+
+// src/modules/prehandlers/json-handlers/get-relations.ts
+var getJsonRelations;
+var init_get_relations2 = __esm({
+  "src/modules/prehandlers/json-handlers/get-relations.ts"() {
+    init_handler_registry();
+    init_field_relation_logger();
+    init_schema_helper();
+    getJsonRelations = (prismaState, data) => {
+      const response = handlerResponse(data);
+      const helper = useHelper(prismaState);
+      const { options, args } = data;
+      const modelnames = args?.models || [];
+      if (!modelnames.length) {
+        return response.error("You must provide at least one model name. Example: GET RELATIONS [ModelNameA], [ModelNameB]");
+      }
+      const models = helper.getModels();
+      const selectedModels = models.filter((m) => modelnames.includes(m.name));
+      if (!selectedModels.length) {
+        return response.result({
+          total: 0,
+          results: []
+        });
+      }
+      const results = [];
+      const logger = new FieldRelationLogger(prismaState.relations);
+      for (const model of selectedModels) {
+        const log = logger.buildJsonModelTrees(model.name, prismaState.relations, options?.depth || 1);
+        results.push(log);
+      }
+      return response.result({
+        results,
+        total: results.length
+      });
+    };
   }
 });
 
@@ -2950,6 +2838,118 @@ var init_query_json_handler = __esm({
   }
 });
 
+// src/modules/prehandlers/render-handlers/index.ts
+var render_handlers_exports = {};
+__export(render_handlers_exports, {
+  formatColumns: () => formatColumns,
+  getEnumRelations: () => getEnumRelations,
+  getEnums: () => getEnums,
+  getFields: () => getFields,
+  getModel: () => getModel,
+  getModelNames: () => getModelNames,
+  getModels: () => getModels,
+  getRelations: () => getRelations,
+  sortModelNames: () => sortModelNames
+});
+var init_render_handlers = __esm({
+  "src/modules/prehandlers/render-handlers/index.ts"() {
+    init_get_enum_relations();
+    init_get_enums();
+    init_get_fields();
+    init_get_model_names();
+    init_get_model();
+    init_get_models();
+    init_get_relations();
+  }
+});
+
+// src/modules/prehandlers/json-handlers/get-enum-relations.ts
+var getJsonEnumRelations;
+var init_get_enum_relations2 = __esm({
+  "src/modules/prehandlers/json-handlers/get-enum-relations.ts"() {
+    init_handler_registry();
+    init_schema_helper();
+    getJsonEnumRelations = (prismaState, data) => {
+      const response = handlerResponse(data);
+      const helper = useHelper(prismaState);
+      const { args } = data;
+      const enumName = args?.enums?.[0];
+      if (!enumName) {
+        return response.error("No enum name provided. Example usage: GET ENUM_RELATIONS -> [EnumName];");
+      }
+      const _enum = helper.getEnumByName(enumName);
+      if (!_enum) {
+        return response.error(`Enum ${enumName} not found`);
+      }
+      const relations = helper.getEnumRelations(enumName);
+      const total = relations.length;
+      if (!total) {
+        return response.result({
+          total: 0,
+          relations: []
+        });
+      }
+      return response.result({
+        total,
+        relations
+      });
+    };
+  }
+});
+
+// src/modules/prehandlers/json-handlers/index.ts
+var json_handlers_exports = {};
+__export(json_handlers_exports, {
+  getJsonEnumRelations: () => getJsonEnumRelations,
+  getJsonEnums: () => getJsonEnums,
+  getJsonFields: () => getJsonFields,
+  getJsonModel: () => getJsonModel,
+  getJsonModelNames: () => getJsonModelNames,
+  getJsonModels: () => getJsonModels,
+  getJsonRelations: () => getJsonRelations,
+  sortModelNames: () => sortModelNames2
+});
+var init_json_handlers = __esm({
+  "src/modules/prehandlers/json-handlers/index.ts"() {
+    init_get_enum_relations2();
+    init_get_enums2();
+    init_get_fields2();
+    init_get_model_names2();
+    init_get_model2();
+    init_get_models2();
+    init_get_relations2();
+  }
+});
+
+// src/modules/prehandlers/mutation-handlers/index.ts
+var mutation_handlers_exports = {};
+__export(mutation_handlers_exports, {
+  addEnum: () => addEnum,
+  addField: () => addField,
+  addModel: () => addModel,
+  addRelation: () => addRelation,
+  deleteEnum: () => deleteEnum,
+  deleteField: () => deleteField,
+  deleteModel: () => deleteModel,
+  deleteRelation: () => deleteRelation,
+  updateEnum: () => updateEnum,
+  updateField: () => updateField
+});
+var init_mutation_handlers = __esm({
+  "src/modules/prehandlers/mutation-handlers/index.ts"() {
+    init_add_enum();
+    init_add_field();
+    init_add_model();
+    init_add_relation();
+    init_delete_enum();
+    init_delete_field();
+    init_delete_model();
+    init_delete_relations();
+    init_update_enum();
+    init_update_field();
+  }
+});
+
 // src/index.cts
 module.exports = {
   ...(init_dsl(), __toCommonJS(dsl_exports)),
@@ -2964,11 +2964,11 @@ module.exports = {
   ...(init_handler_registry(), __toCommonJS(handler_registry_exports)),
   ...(init_query_handler_registry(), __toCommonJS(query_handler_registry_exports)),
   ...(init_mutation_handler_registry(), __toCommonJS(mutation_handler_registry_exports)),
+  ...(init_mutation_handler(), __toCommonJS(mutation_handler_exports)),
+  ...(init_query_render_handler(), __toCommonJS(query_render_handler_exports)),
+  ...(init_query_json_handler(), __toCommonJS(query_json_handler_exports)),
   renderGetters: (init_render_handlers(), __toCommonJS(render_handlers_exports)),
   jsonGetters: (init_json_handlers(), __toCommonJS(json_handlers_exports)),
-  mutationHandlers: (init_mutation_handlers(), __toCommonJS(mutation_handlers_exports)),
-  mutationHandler: (init_mutation_handler(), __toCommonJS(mutation_handler_exports)),
-  queryRenderHandler: (init_query_render_handler(), __toCommonJS(query_render_handler_exports)),
-  queryJsonHandler: (init_query_json_handler(), __toCommonJS(query_json_handler_exports))
+  mutationHandlers: (init_mutation_handlers(), __toCommonJS(mutation_handlers_exports))
 };
 //# sourceMappingURL=index.cjs.map

@@ -29,10 +29,10 @@ module.exports = {
     ...require("./modules/handler-registries/handler-registry.js"),
     ...require("./modules/handler-registries/query-handler-registry.js"),
     ...require("./modules/handler-registries/mutation-handler-registry.js"),
+    ...require("./modules/handlers/mutation-handler.js"),
+    ...require("./modules/handlers/query-render-handler.js"),
+    ...require("./modules/handlers/query-json-handler.js"),
     renderGetters: require("./modules/prehandlers/render-handlers/index.js"),
     jsonGetters: require("./modules/prehandlers/json-handlers/index.js"),
     mutationHandlers: require("./modules/prehandlers/mutation-handlers/index.js"),
-    mutationHandler: require("./modules/handlers/mutation-handler.js"),
-    queryRenderHandler: require("./modules/handlers/query-render-handler.js"),
-    queryJsonHandler: require("./modules/handlers/query-json-handler.js")
 };
