@@ -152,7 +152,7 @@ export class DslParser {
             args: finalArgs,
             options: parsedOptions,
             prismaBlock: prismaBlockStr,
-            raw,
+            raw: input,
             type: ACTION_TYPE_MAP[actionStr] as T,
         };
     }
@@ -221,17 +221,17 @@ export class DslParser {
 
 const instance = new DslParser({
     GET: {
-        default: (parsedArgs, rawArgs) => parsedArgs,
+        default: (parsedArgs) => parsedArgs,
         MODEL: (parsedArgs, rawArgs) => {
             if (rawArgs?.includes("IN")) {
                 return { models: [rawArgs.split("IN")[1].trim()] };
             }
             return parsedArgs;
         },
-        MODELS: (parsedArgs, rawArgs) => {
+        MODELS: (_, rawArgs) => {
             return { models: rawArgs ? rawArgs.split(",").map(m => m.trim()) : [] };
         },
-        RELATIONS: (parsedArgs, rawArgs) => {
+        RELATIONS: (_, rawArgs) => {
             return { models: rawArgs ? rawArgs.split(",").map(r => r.trim()) : [] };
         },
         FIELDS: (parsedArgs, rawArgs) => {
@@ -239,23 +239,23 @@ const instance = new DslParser({
             if (!fieldsStr || !modelName) return parsedArgs;
             return { models: [modelName.trim()], fields: fieldsStr.split(",").map(f => f.trim()) };
         },
-        ENUMS: (parsedArgs, rawArgs) => {
+        ENUMS: (_, rawArgs) => {
             return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
         },
-        ENUM_RELATIONS: (parsedArgs, rawArgs) => {
+        ENUM_RELATIONS: (_, rawArgs) => {
             return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
         }
     },
     ADD: {
-        default: (parsedArgs, rawArgs) => parsedArgs,
-        MODEL: (parsedArgs, rawArgs) => {
+        default: (parsedArgs) => parsedArgs,
+        MODEL: (_, rawArgs) => {
             return { models: rawArgs ? rawArgs.split(",").map(m => m.trim()) : [] };
         },
-        ENUM: (parsedArgs, rawArgs) => {
+        ENUM: (_, rawArgs) => {
             return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
         },
         FIELD: (parsedArgs, rawArgs) => {
-            const [fieldName, modelName, fieldArgs] = rawArgs?.split("TO") || [];
+            const [fieldName, modelName] = rawArgs?.split("TO") || [];
             if (!fieldName || !modelName) return parsedArgs;
             return { models: [modelName.trim()], fields: [fieldName.trim()] };
         },
@@ -266,11 +266,11 @@ const instance = new DslParser({
         }
     },
     DELETE: {
-        default: (parsedArgs, rawArgs) => parsedArgs,
-        MODEL: (parsedArgs, rawArgs) => {
+        default: (parsedArgs) => parsedArgs,
+        MODEL: (_, rawArgs) => {
             return { models: rawArgs ? rawArgs.split(",").map(m => m.trim()) : [] };
         },
-        ENUM: (parsedArgs, rawArgs) => {
+        ENUM: (_, rawArgs) => {
             return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
         },
         FIELD: (parsedArgs, rawArgs) => {
@@ -278,12 +278,12 @@ const instance = new DslParser({
             if (!fieldName || !modelName) return parsedArgs;
             return { models: [modelName.trim()], fields: [fieldName.trim()] };
         },
-        RELATION: (parsedArgs, rawArgs) => {
+        RELATION: (_, rawArgs) => {
             return { models: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
         }
     },
     UPDATE: {
-        default: (parsedArgs, rawArgs) => parsedArgs,
+        default: (parsedArgs) => parsedArgs,
         FIELD: (parsedArgs, rawArgs) => {
             const [fieldName, modelName, prismaBlock] = rawArgs?.split("IN") || [];
             if (!fieldName || !modelName) return parsedArgs;
@@ -292,15 +292,15 @@ const instance = new DslParser({
                     .trim()], prismaBlock: prismaBlock?.trim()
             };
         },
-        ENUM: (parsedArgs, rawArgs) => {
+        ENUM: (_, rawArgs) => {
             return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
         }
     },
     PRINT: {
-        default: (parsedArgs, rawArgs) => parsedArgs,
+        default: (parsedArgs) => parsedArgs,
     },
     VALIDATE: {
-        default: (parsedArgs, rawArgs) => parsedArgs,
+        default: (parsedArgs) => parsedArgs,
     },
 });
 

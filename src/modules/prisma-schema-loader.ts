@@ -2,8 +2,8 @@ import fs from "fs";
 import fsx from "fs-extra";
 import path from "path";
 import { getSchema, createPrismaSchemaBuilder } from "@mrleebo/prisma-ast";
-import { validatePrismaSchema } from "./prisma-validation.js";
-import { loadPrismaSchema } from "./load-prisma-schema.js";
+import { validatePrismaSchema } from "./utils/prisma-validation.js";
+import { loadPrismaSchema } from "./utils/load-prisma-schema.js";
 import pkg from '@prisma/internals';
 const { getDMMF } = pkg;
 import type { DMMF } from "@prisma/generator-helper";
@@ -20,10 +20,21 @@ export type PrismaSchemaData = {
     relations: Relation[]
 }
 
+export type PrismaSchemaLoaderOptions = {
+    backupPath?: string;
+}
+
 export class PrismaSchemaLoader {
     private lastValidatedSchema: string | null = null;
     private readonly prismaState: PrismaSchemaData | null = null;
-    constructor(public relationCollector: PrismaRelationCollector) {
+    private backupPath: string | null = null;
+    constructor(
+        public relationCollector: PrismaRelationCollector,
+        public options: PrismaSchemaLoaderOptions = {}
+    ) {
+        if (options.backupPath) {
+            this.backupPath = options.backupPath;
+        }
     }
     async rebase() {
         const schema = this.prismaState?.builder.print({ sort: true });
@@ -91,9 +102,12 @@ export class PrismaSchemaLoader {
 
         const messages = Array.isArray(commits) ? commits : [commits];
         console.log(`🔄 Saving schema with ${messages.length} commit(s):`);
-        messages.forEach(message => {
-            console.log(`- ${message}`);
-        });
+
+        for (let i = 0; i < messages.length; i++) {
+            const message = messages[i];
+            const commitNumber = i + 1;
+            console.log(chalk.grey(`Commit ${commitNumber}:`), chalk.cyanBright(message));
+        }
 
         let outputPath = sourcePath;
         if (sourcePath && !path.isAbsolute(sourcePath)) {
@@ -115,10 +129,9 @@ export class PrismaSchemaLoader {
         if (!finalPath) {
             throw new Error('Cannot save schema without a path, please provide a path!');
         }
-
         // ✅ Generate timestamped backup
         if (fs.existsSync(finalPath)) {
-            const backupDir = path.join(path.dirname(finalPath), ".prisma", "backups");
+            const backupDir = this.backupPath ? this.backupPath : path.join(path.dirname(finalPath), ".prisma", "backups");
             fsx.ensureDirSync(backupDir);
             const backupPath = path.join(backupDir, `${path.basename(finalPath)}_${new Date().toISOString().replace(/[:.]/g, "-")}.bak.prisma`);
             fsx.copyFileSync(finalPath, backupPath);

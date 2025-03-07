@@ -4,7 +4,7 @@ import { HandlerResponse, handlerResponse } from "./handler-registries/handler-r
 import { MutationHandlerRegistry } from "./handler-registries/mutation-handler-registry.js";
 import { QueryHandlerRegistry } from "./handler-registries/query-handler-registry.js";
 import PrismaSchemaLoader from "./prisma-schema-loader.js";
-import { validatePrismaSchema } from "./prisma-validation.js";
+import { validatePrismaSchema } from "./utils/prisma-validation.js";
 import { PrismaHighlighter } from "prismalux";
 const highlightPrismaSchema = new PrismaHighlighter();
 
@@ -17,7 +17,7 @@ export class PrismaQlProvider {
     private queryHandler: QueryHandlerRegistry;
     private mutationHandler: MutationHandlerRegistry;
     private loader: PrismaSchemaLoader;
-    private mutationState: ParsedDSL<DSLAction, DSLCommand, 'mutation'>[] = []; // Состояние мутаций
+    private mutationState: ParsedDSL<DSLAction, DSLCommand, 'mutation'>[] = [];
 
     constructor(config: {
         queryHandler: QueryHandlerRegistry;
@@ -58,28 +58,28 @@ export class PrismaQlProvider {
         return responses.map((r) => r.response);
     }
 
-    async apply<A extends DSLAction, C extends DSLCommand>(input: string, options?: MutationOptions): Promise<{
+    async apply<A extends DSLAction, C extends DSLCommand>(input: string | ParsedDSL<DSLAction, DSLCommand, 'query' | 'mutation'>, options?: MutationOptions): Promise<{
         parsedCommand: ParsedDSL<A, C, 'query' | 'mutation'>,
         response: HandlerResponse
     }> {
-        const parsedCommand = this.parseCommand<A, C, 'query' | 'mutation'>(input);
+        const parsedCommand = "string" === typeof input ? this.parseCommand<A, C, 'query' | 'mutation'>(input) : input;
         if (parsedCommand.type === 'query') {
             return {
-                parsedCommand,
-                response: await this.query(input)
+                parsedCommand: parsedCommand as ParsedDSL<A, C, 'query'>,
+                response: await this.query(parsedCommand as ParsedDSL<DSLQueryAction, DSLCommand, 'query'>)
             }
         }
         if (parsedCommand.type === 'mutation') {
             return {
-                parsedCommand,
-                response: await this.mutation(input, options)
+                parsedCommand: parsedCommand as ParsedDSL<A, C, 'mutation'>,
+                response: await this.mutation(parsedCommand as ParsedDSL<DSLMutationAction, DSLCommand, 'mutation'>, options)
             }
         }
         throw new Error(`Invalid command type: expected "query" or "mutation", got "${parsedCommand.type}"`);
     }
 
-    async query<A extends DSLQueryAction, C extends DSLCommand>(input: string): Promise<HandlerResponse> {
-        const parsedCommand = this.parseCommand<A, C, 'query'>(input);
+    async query<A extends DSLQueryAction, C extends DSLCommand>(input: string | ParsedDSL<DSLQueryAction, DSLCommand, 'query'>): Promise<HandlerResponse> {
+        const parsedCommand = "string" === typeof input ? this.parseCommand<A, C, 'query'>(input) : input;
         if (parsedCommand.type !== 'query') {
             throw new Error(`Invalid command type: expected "query", got "${parsedCommand.type}"`);
         }
@@ -99,8 +99,8 @@ export class PrismaQlProvider {
         return this.queryHandler.execute(parsedCommand.action, parsedCommand.command!, this.loader.clonePrismaState(), parsedCommand);
     }
 
-    async dryMutation<A extends DSLMutationAction, C extends DSLCommand>(input: string): Promise<string> {
-        const parsedCommand = this.parseCommand<A, C, 'mutation'>(input);
+    async dryMutation<A extends DSLMutationAction, C extends DSLCommand>(input: string | ParsedDSL<DSLMutationAction, DSLCommand, 'mutation'>): Promise<string> {
+        const parsedCommand = "string" == typeof input ? this.parseCommand<A, C, 'mutation'>(input) : input;
         if (parsedCommand.type !== 'mutation') {
             throw new Error(`Invalid command type: expected "mutation", got "${parsedCommand.type}"`);
         }
@@ -131,8 +131,8 @@ export class PrismaQlProvider {
         return updatedSchema;
     }
 
-    async mutation<A extends DSLMutationAction, C extends DSLCommand>(input: string, options: MutationOptions = {}): Promise<HandlerResponse> {
-        const parsedCommand = this.parseCommand<A, C, "mutation">(input);
+    async mutation<A extends DSLMutationAction, C extends DSLCommand>(input: string | ParsedDSL<DSLMutationAction, DSLCommand, 'mutation'>, options: MutationOptions = {}): Promise<HandlerResponse> {
+        const parsedCommand = "string" === typeof input ? this.parseCommand<A, C, "mutation">(input) : input;
         if (parsedCommand.type !== 'mutation') {
             throw new Error(`Invalid command type: expected "mutation", got "${parsedCommand.type}"`);
         }

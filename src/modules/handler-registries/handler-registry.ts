@@ -1,8 +1,6 @@
 import {
     DSLAction,
     DSLCommand,
-    DSLArgs,
-    DSLOptions,
     ParsedDSL,
     DSLType,
 } from '../dsl.js';

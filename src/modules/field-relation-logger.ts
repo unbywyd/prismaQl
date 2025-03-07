@@ -9,6 +9,30 @@ import type { DMMF } from "@prisma/generator-helper";
 import fs from 'fs';
 const collector = new PrismaRelationCollector();
 
+export type ModelTree = {
+    model: string;
+    relations: RelationNode[];
+};
+export type JsonRelationTree = {
+    trees: ModelTree[];
+    models: Set<string>;
+    relations: Set<string>;
+};
+export type RelationNode = {
+    relatedModel: string;
+    field: string;
+    type: string;
+    alias?: string;
+    foreignKey?: string;
+    referenceKey?: string;
+    relationTable?: string;
+    inverseField?: string;
+    constraints?: string[];
+    isSelfRelation?: boolean;
+    isList?: boolean;
+    subTree?: ModelTree;
+};
+
 export type RelationStatistics = {
     uniqueModels: number;
     totalRelations: number;
@@ -23,6 +47,60 @@ export class FieldRelationLogger {
         if (relations) {
             this.setRelations(relations);
         }
+    }
+    buildJsonModelTrees(
+        rootModel: string,
+        relations: Relation[],
+        maxDepth: number,
+        depth = 0,
+        visitedModels = new Set<string>()
+    ): JsonRelationTree {
+        if (depth > maxDepth || visitedModels.has(rootModel)) {
+            return { trees: [], models: new Set(), relations: new Set() };
+        }
+        visitedModels.add(rootModel);
+
+        let trees: ModelTree[] = [];
+        let models = new Set<string>();
+        let relationsSet = new Set<string>();
+
+        const modelRelations = relations.filter(rel => rel.modelName === rootModel);
+
+        let relationNodes: RelationNode[] = [];
+
+        for (const relation of modelRelations) {
+            const isSelfRelation = relation.modelName === relation.relatedModel;
+            const isList = (relation.type === "1:M" || relation.type === "M:N") && !relation.foreignKey;
+
+            let relationNode: RelationNode = {
+                relatedModel: relation.relatedModel,
+                field: relation.fieldName || relation.modelName,
+                type: relation.type,
+                alias: relation.fieldName || relation.relationName,
+                foreignKey: relation.foreignKey,
+                referenceKey: relation.referenceKey,
+                relationTable: relation.relationTable,
+                inverseField: relation.inverseField,
+                constraints: relation.constraints || [],
+                isSelfRelation,
+                isList,
+            };
+
+            models.add(rootModel);
+            models.add(relation.relatedModel);
+            relationsSet.add(`${rootModel} -> ${relation.relatedModel}`);
+
+            const subTree = this.buildJsonModelTrees(relation.relatedModel, relations, maxDepth, depth + 1, visitedModels);
+            if (subTree.trees.length > 0) {
+                relationNode.subTree = subTree.trees[0];
+            }
+
+            relationNodes.push(relationNode);
+        }
+
+        trees.push({ model: rootModel, relations: relationNodes });
+
+        return { trees, models, relations: relationsSet };
     }
 
     buildModelTrees(
@@ -158,7 +236,6 @@ export class FieldRelationLogger {
         const prismaSchemaContent = fs.readFileSync(prismaPath, 'utf-8');
         return this.parseSchemaAndSetRelations(prismaSchemaContent);
     }
-
     generateRelationTreeLog(
         rootModel: string,
         maxDepth: number = 1,

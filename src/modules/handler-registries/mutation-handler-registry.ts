@@ -1,5 +1,4 @@
-import { DSLArgs, DSLCommand, DSLOptions, DSLMutationAction } from "../dsl.js";
-import { PrismaSchemaData } from "../prisma-schema-loader.js";
+import { DSLCommand, DSLMutationAction } from "../dsl.js";
 import { Handler, HandlerRegistry } from "./handler-registry.js";
 
 

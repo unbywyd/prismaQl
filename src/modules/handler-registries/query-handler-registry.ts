@@ -1,4 +1,4 @@
-import { DSLArgs, DSLCommand, DSLOptions, DSLQueryAction } from "../dsl.js";
+import { DSLCommand, DSLQueryAction } from "../dsl.js";
 import { Handler, HandlerRegistry } from "./handler-registry.js";
 
 export class QueryHandlerRegistry extends HandlerRegistry<DSLQueryAction, DSLCommand, 'query'> {
