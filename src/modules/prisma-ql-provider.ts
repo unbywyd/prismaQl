@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import parser, { DSLAction, DSLCommand, DslParser, ParsedDSL, DSLQueryAction, DSLMutationAction } from "./dsl.js";
+import { DSLAction, DSLCommand, dslParser, ParsedDSL, DSLQueryAction, DSLMutationAction } from "./dsl.js";
 import { HandlerResponse, handlerResponse } from "./handler-registries/handler-registry.js";
 import { MutationHandlerRegistry } from "./handler-registries/mutation-handler-registry.js";
 import { QueryHandlerRegistry } from "./handler-registries/query-handler-registry.js";
@@ -182,6 +182,6 @@ export class PrismaQlProvider {
     }
 
     private parseCommand<A extends DSLAction, C extends DSLCommand, T extends 'query' | 'mutation'>(input: string): ParsedDSL<A, C, T> {
-        return parser.parseCommand<A, C, T>(input);
+        return dslParser.parseCommand<A, C, T>(input);
     }
 }

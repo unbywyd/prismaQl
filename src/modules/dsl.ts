@@ -219,7 +219,7 @@ export class DslParser {
     }
 }
 
-const instance = new DslParser({
+export const dslParser = new DslParser({
     GET: {
         default: (parsedArgs) => parsedArgs,
         MODEL: (parsedArgs, rawArgs) => {
@@ -303,5 +303,3 @@ const instance = new DslParser({
         default: (parsedArgs) => parsedArgs,
     },
 });
-
-export default instance;

@@ -33,9 +33,9 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var dsl_exports = {};
 __export(dsl_exports, {
   DslParser: () => DslParser,
-  default: () => dsl_default
+  dslParser: () => dslParser
 });
-var DSL_PATTERN, ACTION_TYPE_MAP, ACTION_COMMAND_MAP, DslParser, instance, dsl_default;
+var DSL_PATTERN, ACTION_TYPE_MAP, ACTION_COMMAND_MAP, DslParser, dslParser;
 var init_dsl = __esm({
   "src/modules/dsl.ts"() {
     DSL_PATTERN = /^([A-Z]+)(?:\s+([A-Z_]+))?(?:\s+([\w\s,*]+))?(?:\s*\(\{([\s\S]*?)\}\))?(?:\s*\(([^)]*?)\))?$/i;
@@ -164,7 +164,7 @@ var init_dsl = __esm({
         }
       }
     };
-    instance = new DslParser({
+    dslParser = new DslParser({
       GET: {
         default: (parsedArgs) => parsedArgs,
         MODEL: (parsedArgs, rawArgs) => {
@@ -249,7 +249,6 @@ var init_dsl = __esm({
         default: (parsedArgs) => parsedArgs
       }
     });
-    dsl_default = instance;
   }
 });
 
@@ -1289,7 +1288,7 @@ var init_prisma_ql_provider = __esm({
         this.mutationState = [];
       }
       parseCommand(input) {
-        return dsl_default.parseCommand(input);
+        return dslParser.parseCommand(input);
       }
     };
   }

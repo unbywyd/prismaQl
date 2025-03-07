@@ -105,6 +105,7 @@ declare class DslParser {
     detectActionType(source: string): DSLType | null;
     isValid(source: string): boolean | Error;
 }
+declare const dslParser: DslParser;
 
 type PrismaSchemaData = {
     schemaPath?: string;
@@ -405,4 +406,4 @@ declare const queryHandler: QueryHandlerRegistry;
 
 declare const queryJsonHandler: QueryHandlerRegistry;
 
-export { type DSLAction, type DSLArgs, type DSLArgsProcessor, type DSLCommand, type DSLMutationAction, type DSLOptionMap, type DSLOptions, type DSLPrismaRelationType, type DSLQueryAction, type DSLType, DslParser, FieldRelationLogger, type Handler, HandlerRegistry, type HandlerResponse, type JsonRelationTree, type ModelTree, MutationHandlerRegistry, type MutationOptions, type ParsedDSL, PrismaQlProvider, PrismaRelationCollector, type PrismaSchemaData, PrismaSchemaLoader, type PrismaSchemaLoaderOptions, QueryHandlerRegistry, type Relation, type RelationNode, type RelationStatistics, type RelationType, SchemaHelper, extractModelSummary, getManyToManyModelName, getManyToManyTableName, getRelationStatistics, handlerResponse, index$1 as jsonGetters, loadPrismaSchema, mutationHandler, index as mutationHandlers, parseFieldForBuilder, queryHandler, queryJsonHandler, index$2 as renderGetters, useHelper, validatePrismaSchema };
+export { type DSLAction, type DSLArgs, type DSLArgsProcessor, type DSLCommand, type DSLMutationAction, type DSLOptionMap, type DSLOptions, type DSLPrismaRelationType, type DSLQueryAction, type DSLType, DslParser, FieldRelationLogger, type Handler, HandlerRegistry, type HandlerResponse, type JsonRelationTree, type ModelTree, MutationHandlerRegistry, type MutationOptions, type ParsedDSL, PrismaQlProvider, PrismaRelationCollector, type PrismaSchemaData, PrismaSchemaLoader, type PrismaSchemaLoaderOptions, QueryHandlerRegistry, type Relation, type RelationNode, type RelationStatistics, type RelationType, SchemaHelper, dslParser, extractModelSummary, getManyToManyModelName, getManyToManyTableName, getRelationStatistics, handlerResponse, index$1 as jsonGetters, loadPrismaSchema, mutationHandler, index as mutationHandlers, parseFieldForBuilder, queryHandler, queryJsonHandler, index$2 as renderGetters, useHelper, validatePrismaSchema };

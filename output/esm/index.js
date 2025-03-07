@@ -131,7 +131,7 @@ var DslParser = class {
     }
   }
 };
-var instance = new DslParser({
+var dslParser = new DslParser({
   GET: {
     default: (parsedArgs) => parsedArgs,
     MODEL: (parsedArgs, rawArgs) => {
@@ -216,7 +216,6 @@ var instance = new DslParser({
     default: (parsedArgs) => parsedArgs
   }
 });
-var dsl_default = instance;
 
 // src/modules/prisma-schema-loader.ts
 import fs2 from "fs";
@@ -1185,7 +1184,7 @@ var PrismaQlProvider = class {
     this.mutationState = [];
   }
   parseCommand(input) {
-    return dsl_default.parseCommand(input);
+    return dslParser.parseCommand(input);
   }
 };
 
@@ -2556,6 +2555,7 @@ export {
   PrismaSchemaLoader,
   QueryHandlerRegistry,
   SchemaHelper,
+  dslParser,
   extractModelSummary,
   getManyToManyModelName,
   getManyToManyTableName,
