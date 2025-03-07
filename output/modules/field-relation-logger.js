@@ -126,7 +126,7 @@ export class FieldRelationLogger {
             this.setRelations(relations);
         }
         if (!this.relations?.length) {
-            throw new Error('No relations found. Please run relation-collector first and use the setRelations method to set the relations.');
+            throw new Error('No relations found.');
         }
         const { models, relations: rels, trees } = this.buildModelTrees(rootModel, this.relations, maxDepth);
         // Collect statistics

@@ -22,14 +22,26 @@ export type DSLOptionMap = {
     ADD: {
         RELATION: {
             type: DSLPrismaRelationType;
-            pivotTable?: string;
+            pivotTable?: string | true;
             fkHolder?: string;
             required?: boolean;
             relationName?: string;
         };
     };
+    UPDATE: {
+        ENUM: {
+            replace: boolean;
+        };
+    };
+    DELETE: {
+        RELATION: {
+            fieldA?: string;
+            fieldB?: string;
+            relationName?: string;
+        };
+    };
 };
-export type DSLOptions<A extends DSLAction, C extends DSLCommand | undefined> = A extends keyof DSLOptionMap ? C extends keyof DSLOptionMap[A] ? DSLOptionMap[A][C] : Record<string, string | number | boolean> : Record<string, string | number | boolean>;
+export type DSLOptions<A extends DSLAction, C extends DSLCommand | undefined> = A extends keyof DSLOptionMap ? C extends keyof DSLOptionMap[A] ? DSLOptionMap[A][C] : Record<string, string | number | boolean | Array<string>> : Record<string, string | number | boolean | Array<string>>;
 export interface ParsedDSL<A extends DSLAction, C extends DSLCommand | undefined, T extends DSLType> {
     action: A;
     command?: C;
@@ -51,6 +63,7 @@ export declare class DslParser {
     parseParams(input: string): DSLOptions<any, any>;
     parseArgs<A extends DSLAction, C extends DSLCommand | undefined>(argsStr: string | undefined): DSLArgs<A, C>;
     detectActionType(source: string): DSLType | null;
+    isValid(source: string): boolean | Error;
 }
 declare const instance: DslParser;
 export default instance;

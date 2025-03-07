@@ -168,7 +168,7 @@ export class FieldRelationLogger {
             this.setRelations(relations);
         }
         if (!this.relations?.length) {
-            throw new Error('No relations found. Please run relation-collector first and use the setRelations method to set the relations.');
+            throw new Error('No relations found.');
         }
 
         const { models, relations: rels, trees } = this.buildModelTrees(rootModel, this.relations, maxDepth);
@@ -195,7 +195,7 @@ export class FieldRelationLogger {
         const relsList = `${chalk.white.bold('🔗 Direct Relations')}\n${results}`;
 
         // Output statistics + tree, without extra spaces
-        return boxen(output.trim() + '\n'  + treeOutput.trim() + `\n\n${relsList}`, {
+        return boxen(output.trim() + '\n' + treeOutput.trim() + `\n\n${relsList}`, {
             padding: 1,
             borderColor: 'green',
             borderStyle: 'round'

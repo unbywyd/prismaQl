@@ -1,6 +1,7 @@
 import pkg from '@prisma/internals';
 const { getDMMF } = pkg;
 import pluralize from 'pluralize';
+import { pascalCase } from 'change-case';
 export class PrismaRelationCollector {
     models;
     relations = [];
@@ -386,6 +387,14 @@ export const getManyToManyTableName = (modelA, modelB, relationName) => {
         return relationName;
     // In implicit M:N relations, Prisma automatically names tables as _ModelAToModelB (in alphabetical order)
     const [first, second] = [modelA, modelB].sort();
-    return `_${first}To${second}`;
+    return `_${pascalCase(first)}To${pascalCase(second)}`;
+};
+export const getManyToManyModelName = (modelA, modelB, relationName) => {
+    // If the relation is explicit (relationName is set), use it
+    if (relationName)
+        return relationName;
+    // In implicit M:N relations, Prisma automatically names tables as _ModelAToModelB (in alphabetical order)
+    const [first, second] = [modelA, modelB].sort();
+    return `${pascalCase(first)}To${pascalCase(second)}`;
 };
 //# sourceMappingURL=field-relation-collector.js.map

@@ -1,74 +1,75 @@
-import { MutationHandlerRegistry } from "./handler-registries/mutation-handler-registry.js";
-import { QueryHandlerRegistry } from "./handler-registries/query-handler-registry.js";
 import { PrismaQlProvider } from "./prisma-ql-provider.js";
 import PrismaSchemaLoader from "./prisma-schema-loader.js";
 import parser from "./dsl.js";
 import { PrismaRelationCollector } from "./field-relation-collector.js";
-import { getModels } from "./cli-handlers/get-models.js";
-import { getModel } from "./cli-handlers/get-model.js";
-import { addModel } from "./cli-handlers/add-model.js";
-import { getFields } from "./cli-handlers/get-fields.js";
-import { getModelNames } from "./cli-handlers/get-model-names.js";
-import { getEnums } from "./cli-handlers/get-enums.js";
-import { getRelations } from "./cli-handlers/get-raltions.js";
-import { addEnum } from "./cli-handlers/add-enum.js";
-import { deleteEnum } from "./cli-handlers/delete-enum.js";
-import { getEnumRelations } from "./cli-handlers/get-enum-relations.js";
-import { deleteModel } from "./cli-handlers/delete-model.js";
-import { addField } from "./cli-handlers/add-field.js";
-import { deleteField } from "./cli-handlers/delete-field.js";
-import { updateField } from "./cli-handlers/update-field.js";
-import { addRelation } from "./cli-handlers/add-relation.js";
+import chalk from "chalk";
+import inquirer from "inquirer";
+import { PrismaHighlighter } from "prismalux";
+import boxen from "boxen";
+import queryHandler from "./query-handler.js";
+import mutationHandler from "./mutation-handler.js";
 const manager = new PrismaSchemaLoader(new PrismaRelationCollector());
-const queryHandler = new QueryHandlerRegistry();
-const mutationHandler = new MutationHandlerRegistry();
-queryHandler.register("GET", "MODEL", getModel);
-queryHandler.register("GET", "MODELS", getModels);
-queryHandler.register("GET", "FIELDS", getFields);
-queryHandler.register("GET", "ENUMS", getEnums);
-queryHandler.register("GET", "MODELS_LIST", getModelNames);
-queryHandler.register("GET", "RELATIONS", getRelations);
-queryHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
-mutationHandler.register("ADD", "MODEL", addModel);
-mutationHandler.register("ADD", "FIELD", addField);
-mutationHandler.register("ADD", "ENUM", addEnum);
-mutationHandler.register("ADD", "RELATION", addRelation);
-mutationHandler.register("DELETE", "ENUM", deleteEnum);
-mutationHandler.register("DELETE", "MODEL", deleteModel);
-mutationHandler.register("DELETE", "FIELD", deleteField);
-mutationHandler.register("UPDATE", "FIELD", updateField);
-const loadQueryRenderManager = async () => {
+const highlightPrismaSchema = new PrismaHighlighter();
+const confirm = async (msg) => {
+    console.log(boxen(highlightPrismaSchema.highlight(msg), { padding: 1, margin: 1, borderStyle: "double" }));
+    console.log(chalk.greenBright("🎉🎉🎉 Mutation is valid and can be applied.\n"));
+    const { confirm } = await inquirer.prompt({
+        type: "confirm",
+        name: "confirm",
+        message: chalk.yellowBright("Do you want to overwrite the Prisma file with these changes?"),
+    });
+    return confirm;
+};
+const loadQueryRenderManager = async (options = {}) => {
     await manager.loadFromFile();
     const provider = new PrismaQlProvider({
-        queryHandler,
+        queryHandler: queryHandler,
         mutationHandler,
         loader: manager,
     });
     return (sourceCommand) => {
-        const actionType = parser.detectActionType(sourceCommand);
-        if (actionType === "mutation") {
-            provider.mutation(sourceCommand).then(res => {
-                if (res?.result) {
-                    console.log(res.result);
-                }
-                else if (res.error) {
-                    console.error(res.error);
-                }
-            }).catch(console.error);
+        if (sourceCommand?.split(';').length > 2) {
+            return provider.multiApply(sourceCommand, {
+                save: true,
+                dryRun: options.dry,
+                confirm: confirm
+            }).then(res => {
+                res.forEach((r, i) => {
+                    if (r?.result) {
+                        console.log(chalk.greenBright(`Command ${i + 1} result: \n${r.result}`));
+                    }
+                    else {
+                        console.error(`Command ${i + 1} error: ${r.error}`);
+                    }
+                });
+                console.log(chalk.greenBright("\nAll commands applied"));
+            }).catch(e => {
+                console.error(`Error: ${e.message}`);
+            });
         }
-        else if (actionType === "query") {
-            provider.query(sourceCommand).then(res => {
-                if (res?.result) {
-                    console.log(res.result);
-                }
-                else {
-                    console.error(res.error);
-                }
-            }).catch(console.error);
+        const isValid = parser.isValid(sourceCommand);
+        if (isValid instanceof Error) {
+            console.log(chalk.redBright(`Invalid command: ${isValid.message}`));
+            console.log(chalk.yellowBright("Example command pattern: ACTION COMMAND ...args (options) ({prismaBlock})"));
+            return;
         }
         else {
-            throw new Error(`Invalid action type: ${actionType}`);
+            console.log(chalk.greenBright("Command is valid"));
         }
+        provider.apply(sourceCommand, {
+            save: true,
+            dryRun: options.dry,
+            confirm: confirm
+        }).then(res => {
+            if (res?.response?.result) {
+                console.log(chalk.greenBright(res.response.result));
+            }
+            else {
+                console.error(`Error: ${res.response.error}`);
+            }
+        }).catch(e => {
+            console.log(chalk.redBright(`Error: ${e.message}`));
+        });
     };
 };
 export default loadQueryRenderManager;

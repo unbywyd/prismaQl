@@ -14,7 +14,47 @@ export class PrismaQlProvider {
         this.mutationHandler = config.mutationHandler;
         this.loader = config.loader;
     }
-    // Выполнение запроса
+    async multiApply(commands, options = {}) {
+        const commandsArray = Array.isArray(commands) ? commands : commands.split(';').map((c) => c.trim()).filter((c) => c.length > 0).map((c) => c + ';');
+        const responses = [];
+        for (const command of commandsArray) {
+            try {
+                const result = await this.apply(command);
+                if (result?.response?.error) {
+                    throw new Error("string" === typeof result.response.error ? result.response.error : "Error applying command");
+                }
+                responses.push(result);
+            }
+            catch (e) {
+                console.log(chalk.red(`Error processing command: ${e.message}`));
+                throw e;
+            }
+        }
+        const hasMutations = responses.some((r) => r.parsedCommand.type === 'mutation');
+        if (options.confirm && options.save && hasMutations && !options.dryRun) {
+            const confirmed = await options.confirm(highlightPrismaSchema.highlight(this.loader.print()));
+            if (confirmed) {
+                await this.save();
+            }
+        }
+        return responses.map((r) => r.response);
+    }
+    async apply(input, options) {
+        const parsedCommand = this.parseCommand(input);
+        if (parsedCommand.type === 'query') {
+            return {
+                parsedCommand,
+                response: await this.query(input)
+            };
+        }
+        if (parsedCommand.type === 'mutation') {
+            return {
+                parsedCommand,
+                response: await this.mutation(input, options)
+            };
+        }
+        throw new Error(`Invalid command type: expected "query" or "mutation", got "${parsedCommand.type}"`);
+    }
     async query(input) {
         const parsedCommand = this.parseCommand(input);
         if (parsedCommand.type !== 'query') {
@@ -35,13 +75,13 @@ export class PrismaQlProvider {
         }
         return this.queryHandler.execute(parsedCommand.action, parsedCommand.command, this.loader.clonePrismaState(), parsedCommand);
     }
-    // Выполнение мутации
-    async mutation(input, options = {}) {
+    async dryMutation(input) {
         const parsedCommand = this.parseCommand(input);
         if (parsedCommand.type !== 'mutation') {
             throw new Error(`Invalid command type: expected "mutation", got "${parsedCommand.type}"`);
         }
         const clone = this.loader.clonePrismaState();
+        const displayCommand = `${parsedCommand.action} ${parsedCommand.command} >`;
         try {
             const result = await this.mutationHandler.execute(parsedCommand.action, parsedCommand.command, clone, parsedCommand);
             if (result?.error) {
@@ -52,19 +92,29 @@ export class PrismaQlProvider {
                     throw result.error;
                 }
             }
-            console.log('- ' + chalk.green("Dry run success"));
+            console.log('✅', chalk.gray(displayCommand), chalk.green(`Dry run success!`));
         }
         catch (e) {
             throw new Error(`Modification failed: ${e.message}`);
         }
         // Validate the modified schema
         const updatedSchema = clone.builder.print({ sort: true });
-        console.log(updatedSchema);
         const validation = await validatePrismaSchema(updatedSchema);
         if (validation instanceof Error) {
             throw new Error(`Modification failed: ${validation.message}`);
         }
-        console.log('- ' + chalk.green("Validation success"));
+        console.log('✅', chalk.gray(displayCommand), chalk.green(`Validation success!`));
+        return updatedSchema;
+    }
+    async mutation(input, options = {}) {
+        const parsedCommand = this.parseCommand(input);
+        if (parsedCommand.type !== 'mutation') {
+            throw new Error(`Invalid command type: expected "mutation", got "${parsedCommand.type}"`);
+        }
+        const updatedSchema = await this.dryMutation(input);
+        if (!updatedSchema) {
+            return handlerResponse(parsedCommand).error(`Dry run failed`);
+        }
         if (options.dryRun) {
             return handlerResponse(parsedCommand).result(highlightPrismaSchema.highlight(updatedSchema));
         }
@@ -79,16 +129,18 @@ export class PrismaQlProvider {
         try {
             const state = await this.loader.getState();
             this.mutationHandler.execute(parsedCommand.action, parsedCommand.command, state, parsedCommand);
-            // Сохраняем все примененные мутации
             this.mutationState.push(parsedCommand);
-            console.log('- ' + chalk.green("Mutation success"));
+            const displayCommand = `${parsedCommand.action} ${parsedCommand.command} > `;
+            console.log('✅', chalk.white(displayCommand), chalk.green('Mutation success'));
         }
         catch (e) {
             throw new Error(`Modification failed: ${e.message}`);
         }
+        // We need to rebase parsedSchema to the updated schema
         if (options.save) {
             await this.save();
         }
+        await this.loader.rebase();
         return handlerResponse(parsedCommand).result(highlightPrismaSchema.highlight(updatedSchema));
     }
     async save() {

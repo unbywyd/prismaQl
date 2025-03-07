@@ -9,6 +9,7 @@ const { getDMMF } = pkg;
 import type { DMMF } from "@prisma/generator-helper";
 import { PrismaRelationCollector, Relation } from "./field-relation-collector.js";
 import { PrismaHighlighter } from "prismalux";
+import chalk from "chalk";
 const HighlightPrismaSchema = new PrismaHighlighter();
 
 export type PrismaSchemaData = {
@@ -24,7 +25,13 @@ export class PrismaSchemaLoader {
     private readonly prismaState: PrismaSchemaData | null = null;
     constructor(public relationCollector: PrismaRelationCollector) {
     }
-
+    async rebase() {
+        const schema = this.prismaState?.builder.print({ sort: true });
+        const parsedSchema = getSchema(schema!);
+        const builder = createPrismaSchemaBuilder(schema);
+        this.setPrismaState({ schemaPath: this.prismaState?.schemaPath, schema: schema!, ast: parsedSchema, builder, relations: this.relationCollector.getRelations() });
+        await this.collectRelations();
+    }
     getSchemaPath() {
         return this.prismaState?.schemaPath;
     }
@@ -77,13 +84,13 @@ export class PrismaSchemaLoader {
         const parsedSchema = getSchema(sourcePrismaSchema);
         return { schemaPath, schema: sourcePrismaSchema, ast: parsedSchema, builder: cloneBuilder, relations: this.relationCollector.getRelations() };
     }
-    save(commits: Array<string> | string, sourcePath?: string) {
+    async save(commits: Array<string> | string, sourcePath?: string) {
         if (!this.prismaState) {
             throw new Error('No schema loaded to save. Please load a schema first.');
         }
 
         const messages = Array.isArray(commits) ? commits : [commits];
-        console.log(`Saving schema with ${messages.length} commit(s):`);
+        console.log(`🔄 Saving schema with ${messages.length} commit(s):`);
         messages.forEach(message => {
             console.log(`- ${message}`);
         });
@@ -123,13 +130,14 @@ export class PrismaSchemaLoader {
         // ✅ Save schema
         fs.writeFileSync(finalPath, updatedsourcePrismaSchema, "utf-8");
 
-        console.log(`✅ Schema saved successfully to ${finalPath}`);
+        console.log(chalk.greenBright(`✅ Schema saved successfully to ${finalPath}`));
+        console.log(chalk.grey(`📅 Timestamp: ${new Date().toLocaleString()}`));
     }
     print() {
         if (!this.prismaState) {
-            throw new Error("No schema loaded.");
+            return "No schema loaded.";
         }
-        console.log(HighlightPrismaSchema.highlight(this.prismaState.builder.print({ sort: true })));
+        return HighlightPrismaSchema.highlight(this.prismaState.builder.print({ sort: true }));
     }
     async isValid(sourceSchema?: string): Promise<true | Error> {
         if (!sourceSchema && !this.prismaState) {

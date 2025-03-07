@@ -35,5 +35,6 @@ export declare class PrismaRelationCollector {
     parsePrismaSchema(schema?: string): Promise<void>;
 }
 export declare const getManyToManyTableName: (modelA: string, modelB: string, relationName?: string) => string;
+export declare const getManyToManyModelName: (modelA: string, modelB: string, relationName?: string) => string;
 export {};
 //# sourceMappingURL=field-relation-collector.d.ts.map

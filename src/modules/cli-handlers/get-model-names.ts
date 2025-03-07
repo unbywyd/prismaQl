@@ -4,7 +4,6 @@ import { useHelper } from "../schema-helper.js";
 import boxen from "boxen";
 
 
-
 /**
  * Splits an array into columns
  */

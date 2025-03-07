@@ -12,6 +12,7 @@ export declare class PrismaSchemaLoader {
     private lastValidatedSchema;
     private readonly prismaState;
     constructor(relationCollector: PrismaRelationCollector);
+    rebase(): Promise<void>;
     getSchemaPath(): string | undefined;
     private setPrismaState;
     loadFromFile(filePath?: string, forceReload?: boolean): Promise<PrismaSchemaData | null>;
@@ -20,8 +21,8 @@ export declare class PrismaSchemaLoader {
     loadFromText(sourcePrismaSchema: string): Promise<PrismaSchemaData | null>;
     getState(): Promise<PrismaSchemaData>;
     clonePrismaState(): PrismaSchemaData;
-    save(commits: Array<string> | string, sourcePath?: string): void;
-    print(): void;
+    save(commits: Array<string> | string, sourcePath?: string): Promise<void>;
+    print(): string;
     isValid(sourceSchema?: string): Promise<true | Error>;
     check(): void;
 }

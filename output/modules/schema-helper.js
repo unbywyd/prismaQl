@@ -28,6 +28,7 @@ export function parseFieldForBuilder(prop) {
         name,
         fieldType: prismaFieldType,
         attributes: parsedAttributes,
+        sourceType: fieldType
     };
 }
 export class SchemaHelper {
@@ -57,6 +58,13 @@ export class SchemaHelper {
         if (!model)
             return [];
         return model.properties.filter((prop) => prop.type === "field");
+    }
+    getIdFieldTypeModel(modelName) {
+        const model = this.getModelByName(modelName);
+        if (!model)
+            return undefined;
+        const idField = model.properties.find((prop) => prop.type === "field" && prop?.attributes?.some(attr => attr.name === "id"));
+        return idField?.fieldType;
     }
     getEnums() {
         return this.parsedSchema.list

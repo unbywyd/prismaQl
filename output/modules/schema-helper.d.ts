@@ -13,6 +13,7 @@ export declare function parseFieldForBuilder(prop: Property): {
         name: string;
         args: any[];
     }[];
+    sourceType: string;
 } | null;
 export declare class SchemaHelper {
     private parsedSchema;
@@ -21,6 +22,7 @@ export declare class SchemaHelper {
     getModelByName(name: string): Model | undefined;
     getFieldByName(modelName: string, fieldName: string): Field | undefined;
     getFields(modelName: string): Field[];
+    getIdFieldTypeModel(modelName: string): string | undefined;
     getEnums(): Enum[];
     getEnumByName(name: string): Enum | undefined;
     getEnumRelations(enumName: string): Array<{

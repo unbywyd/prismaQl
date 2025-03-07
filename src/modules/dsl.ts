@@ -35,11 +35,23 @@ export type DSLOptionMap = {
     ADD: {
         RELATION: {
             type: DSLPrismaRelationType,
-            pivotTable?: string,
+            pivotTable?: string | true,
             fkHolder?: string,
             required?: boolean,
             relationName?: string,
         };
+    },
+    UPDATE: {
+        ENUM: {
+            replace: boolean;
+        }
+    },
+    DELETE: {
+        RELATION: {
+            fieldA?: string;
+            fieldB?: string;
+            relationName?: string;
+        }
     }
 };
 
@@ -47,8 +59,8 @@ export type DSLOptions<A extends DSLAction, C extends DSLCommand | undefined> =
     A extends keyof DSLOptionMap
     ? C extends keyof DSLOptionMap[A]
     ? DSLOptionMap[A][C]
-    : Record<string, string | number | boolean>
-    : Record<string, string | number | boolean>;
+    : Record<string, string | number | boolean | Array<string>>
+    : Record<string, string | number | boolean | Array<string>>;
 
 
 export interface ParsedDSL<A extends DSLAction, C extends DSLCommand | undefined, T extends DSLType> {
@@ -81,7 +93,7 @@ const ACTION_COMMAND_MAP: Record<DSLAction, DSLCommand[]> = {
     GET: ["MODELS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
     ADD: ["MODEL", "FIELD", "RELATION", "ENUM"],
     DELETE: ["MODEL", "FIELD", "RELATION", "ENUM"],
-    UPDATE: ["FIELD"],
+    UPDATE: ["FIELD", "ENUM"],
     PRINT: [],
     VALIDATE: [],
 };
@@ -163,6 +175,15 @@ export class DslParser {
                 else {
                     result[key] = valueStr;
                 }
+                if (valueStr.includes(",")) {
+                    result[key] = valueStr.split(",").map(v => v.trim());
+                } else {
+                    try {
+                        result[key] = JSON.parse(valueStr);
+                    } catch (e) {
+                        result[key] = valueStr;
+                    }
+                }
             } else {
                 const flag = token.trim();
                 result[flag] = true;
@@ -188,7 +209,14 @@ export class DslParser {
         const actionStr = match[1].toUpperCase() as DSLAction;
         return ACTION_TYPE_MAP[actionStr] || null;
     }
-
+    isValid(source: string): boolean | Error {
+        try {
+            this.parseCommand(source);
+            return true;
+        } catch (e) {
+            return e;
+        }
+    }
 }
 
 const instance = new DslParser({
@@ -249,6 +277,9 @@ const instance = new DslParser({
             const [fieldName, modelName] = rawArgs?.split("IN") || [];
             if (!fieldName || !modelName) return parsedArgs;
             return { models: [modelName.trim()], fields: [fieldName.trim()] };
+        },
+        RELATION: (parsedArgs, rawArgs) => {
+            return { models: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
         }
     },
     UPDATE: {
@@ -260,6 +291,9 @@ const instance = new DslParser({
                 models: [modelName.trim()], fields: [fieldName
                     .trim()], prismaBlock: prismaBlock?.trim()
             };
+        },
+        ENUM: (parsedArgs, rawArgs) => {
+            return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
         }
     },
     PRINT: {

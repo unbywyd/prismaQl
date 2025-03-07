@@ -7,13 +7,13 @@ export const getFields = (prismaState, data) => {
     const response = handlerResponse(data);
     const { args } = data;
     const helper = useHelper(prismaState);
-    if (!args?.models?.length) {
-        return response.result(chalk.red("❌ No models specified"));
+    const modelName = args?.models?.[0];
+    if (!modelName) {
+        return response.error("❌ No models specified. Usage: GET FIELDS -> [ModelName]; or GET FIELDS [FieldName], [FieldName2] IN -> [ModelName];");
     }
-    const modelName = args.models[0];
     const model = helper.getModelByName(modelName);
     if (!model) {
-        return response.result(chalk.red(`❌ Model ${modelName} not found`));
+        return response.error(`❌ Model ${modelName} not found`);
     }
     let fields = helper.getFields(modelName);
     if (!fields.length) {
@@ -27,7 +27,6 @@ export const getFields = (prismaState, data) => {
         return response.result(chalk.yellow(`⚠ No fields found in model ${modelName} that match filters`));
     }
     const idField = fields.find(f => f.attributes?.some(attr => attr.name === "id"))?.name;
-    // Создаем таблицу
     const table = new Table({
         head: [
             chalk.bold("Field Name"),
@@ -37,12 +36,11 @@ export const getFields = (prismaState, data) => {
             chalk.bold("Relation"),
             chalk.bold("Attributes")
         ],
-        colWidths: [20, 15, 10, 10, 25, 25], // Устанавливаем ширину колонок
-        style: { head: ["cyan"] } // Цвет заголовков
+        colWidths: [20, 15, 10, 10, 25, 25],
+        style: { head: ["cyan"] }
     });
     const { relations } = prismaState;
     let relationFields = 0;
-    // Обрабатываем поля модели
     fields.forEach((field) => {
         let name = chalk.greenBright(field.name);
         const type = chalk.blueBright(field.fieldType);
@@ -52,7 +50,6 @@ export const getFields = (prismaState, data) => {
         let relation = hasRelation
             ? chalk.magentaBright("Yes")
             : chalk.gray("No");
-        // Собираем атрибуты
         const attrs = ['unique', 'id', 'default'];
         const attributes = field.attributes?.filter(attr => attrs.includes(attr.name)).map(attr => {
             if (attrs.includes(attr.name) && Array.isArray(attr.args)) {

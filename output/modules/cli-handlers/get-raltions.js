@@ -7,7 +7,7 @@ export const getRelations = (prismaState, data) => {
     const { options, args } = data;
     const modelnames = args?.models || [];
     if (!modelnames.length) {
-        return response.result("You must provide at least one model name");
+        return response.result("You must provide at least one model name. Example: GET RELATIONS [ModelNameA], [ModelNameB]");
     }
     const models = helper.getModels();
     const selectedModels = models.filter(m => modelnames.includes(m.name));

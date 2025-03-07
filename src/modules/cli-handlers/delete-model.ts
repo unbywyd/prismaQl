@@ -4,16 +4,13 @@ export const deleteModel: Handler<"DELETE", "MODEL", "mutation"> = (prismaState,
     const { args } = data;
     const response = handlerResponse(data);
 
-    if (!args?.models || !args.models.length) {
-        return response.error("No model name provided");
+    const modelName = args?.models?.[0];
+
+    if (!modelName) {
+        return response.error("No model name provided. Usage: DELETE MODEL ->[ModelName];");
     }
 
     try {
-        const modelName = args.models[0];
-
-        if (!modelName) {
-            return response.error("No model name provided");
-        }
         const builder = prismaState.builder;
 
         const prevModel = builder.findByType("model", { name: modelName });

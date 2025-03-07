@@ -29,10 +29,12 @@ export function parseFieldForBuilder(prop: Property) {
         parsedAttributes.push({ name: attr.name, args: attrArgs });
     }
 
+
     return {
         name,
         fieldType: prismaFieldType,
         attributes: parsedAttributes,
+        sourceType: fieldType
     };
 }
 
@@ -66,6 +68,13 @@ export class SchemaHelper {
         const model = this.getModelByName(modelName);
         if (!model) return [];
         return model.properties.filter((prop): prop is Field => prop.type === "field");
+    }
+
+    getIdFieldTypeModel(modelName: string): string | undefined {
+        const model = this.getModelByName(modelName);
+        if (!model) return undefined;
+        const idField = model.properties.find((prop): prop is Field => prop.type === "field" && (prop as Field)?.attributes?.some(attr => attr.name === "id")!);
+        return idField?.fieldType as string | undefined;
     }
 
     getEnums(): Enum[] {

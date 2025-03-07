@@ -4,21 +4,19 @@ export const deleteField: Handler<"DELETE", "FIELD", "mutation"> = (prismaState,
     const { args } = data;
     const response = handlerResponse(data);
 
-    if (!args?.models || !args.models.length) {
-        return response.error("No model name provided");
+    if (!args?.fields || !args.fields.length) {
+        return response.error("No field name provided. Example: DELETE FIELD ->[FieldName] IN ->[ModelName]");
     }
 
-    if (!args?.fields || !args.fields.length) {
-        return response.error("No field name provided");
+    const modelName = args?.models?.[0];
+    if (!modelName) {
+        return response.error("No model name provided. Example: DELETE FIELD FieldName IN ->[ModelName]");
     }
+
 
     const fieldName = args.fields[0];
     try {
-        const modelName = args.models[0];
 
-        if (!modelName) {
-            return response.error("No model name provided");
-        }
         const builder = prismaState.builder;
 
         const prevModel = builder.findByType("model", { name: modelName });

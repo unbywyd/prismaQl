@@ -2,29 +2,31 @@ import { getSchema } from "@mrleebo/prisma-ast";
 import { handlerResponse } from "../handler-registries/handler-registry.js";
 import { parseFieldForBuilder, useHelper } from "../schema-helper.js";
 export const addModel = (prismaState, data) => {
-    const { args, options, prismaBlock } = data;
+    const { args, prismaBlock } = data;
     const response = handlerResponse(data);
-    if (!args?.models) {
-        return response.error("No models provided to add.");
+    const modelName = (args?.models || [])[0];
+    if (!modelName) {
+        return response.error("Model name is required. Example: ADD MODEL -> [ModelName] ({id String @id})");
     }
     try {
-        const modelName = args?.models[0];
-        if (!modelName) {
-            return response.error("No model name provided");
-        }
         const builder = prismaState.builder;
         const prevModel = builder.findByType("model", { name: modelName });
         if (prevModel) {
             return response.error(`Model ${modelName} already exists`);
         }
         if (!prismaBlock) {
-            return response.error("No fields provided");
+            return response.error("No fields provided. Please provide a valid block in ({...}) containing a valid Prisma field description.");
         }
-        // Так как команда у нас моожет быть инлайн, нам нужно заменить искуственные переносы строк на настоящие
+        let parsed;
         const sourceModel = `model ${modelName} {
         ${prismaBlock || "id Int @id"}
         }`;
-        const parsed = getSchema(sourceModel);
+        try {
+            parsed = getSchema(sourceModel);
+        }
+        catch (error) {
+            return response.error(`Invalid block provided. Error parsing model: ${error.message}`);
+        }
         const model = useHelper(parsed).getModelByName(modelName);
         if (!model) {
             return response.error(`Model ${modelName} already exists`);

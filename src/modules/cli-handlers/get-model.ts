@@ -58,18 +58,20 @@ export function extractModelSummary(model: Model, relations: Relation[]): FieldS
 export const getModel: Handler<"GET", "MODEL", "query"> = (prismaState, data) => {
     const { args } = data;
     const response = handlerResponse(data);
-    if (!args?.models?.length) {
-        return response.result("No model specified");
+
+    const modelName = args?.models?.[0];
+    if (!modelName) {
+        return response.error("No model specified. Example usage: GET MODEL ->[ModelName];");
     }
-    const modelName = args.models[0];
+
 
     const model = useHelper(prismaState).getModelByName(modelName);
     if (!model) {
-        return response.result(`Model ${modelName} not found`)
+        return response.error(`Model ${modelName} not found`)
     }
 
     const fields: FieldSummary[] = extractModelSummary(model, prismaState.relations);
-    const { totalRelations, uniqueModels } = getRelationStatistics(prismaState.relations, model.name);
+    const { totalRelations } = getRelationStatistics(prismaState.relations, model.name);
 
     const schema: Schema = {
         type: "schema",

@@ -1,1 +1,1 @@
-{"version":3,"file":"cli-provider.d.ts","sourceRoot":"","sources":["../../src/modules/cli-provider.ts"],"names":[],"mappings":"AAiDA,QAAA,MAAM,sBAAsB,gCAOD,MAAM,UAuBhC,CAAA;AACD,eAAe,sBAAsB,CAAC"}
+{"version":3,"file":"cli-provider.d.ts","sourceRoot":"","sources":["../../src/modules/cli-provider.ts"],"names":[],"mappings":"AA6BA,QAAA,MAAM,sBAAsB,aAAmB,MAAM,CAAC,MAAM,EAAE,OAAO,GAAG,MAAM,GAAG,MAAM,CAAC,6BAO7D,MAAM,+BA0ChC,CAAA;AACD,eAAe,sBAAsB,CAAC"}

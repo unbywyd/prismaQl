@@ -8,12 +8,13 @@ import boxen from "boxen";
 export const getEnumRelations: Handler<"GET", "ENUM_RELATIONS", "query"> = (prismaState, data) => {
     const response = handlerResponse(data);
     const helper = useHelper(prismaState);
-
     const { args } = data;
-    if (!args?.enums?.length) {
-        return response.error("No enum name provided");
+
+    const enumName = args?.enums?.[0];
+    if (!enumName) {
+        return response.error("No enum name provided. Example usage: GET ENUM_RELATIONS -> [EnumName];");
     }
-    const enumName = args.enums[0];
+
     const _enum = helper.getEnumByName(enumName);
     if (!_enum) {
         return response.error(`Enum ${enumName} not found`);
