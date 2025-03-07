@@ -39,6 +39,6 @@ export * as jsonGetters from "./modules/prehandlers/json-handlers/index.js";
 export * as mutationHandlers from "./modules/prehandlers/mutation-handlers/index.js";
 
 // preregistered handlers
-export * from "./modules/handlers/mutation-handler.js";
-export * from "./modules/handlers/query-render-handler.js";
-export * from "./modules/handlers/query-json-handler.js";
+export { mutationHandler } from "./modules/handlers/mutation-handler.js";
+export { queryHandler } from "./modules/handlers/query-render-handler.js";
+export { queryJsonHandler } from "./modules/handlers/query-json-handler.js";
