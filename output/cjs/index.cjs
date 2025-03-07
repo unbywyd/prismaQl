@@ -2866,9 +2866,9 @@ var init_mutation_handlers = __esm({
 // src/modules/handlers/mutation-handler.ts
 var mutation_handler_exports = {};
 __export(mutation_handler_exports, {
-  default: () => mutation_handler_default
+  mutationHandler: () => mutationHandler
 });
-var mutationHandler, mutation_handler_default;
+var mutationHandler;
 var init_mutation_handler = __esm({
   "src/modules/handlers/mutation-handler.ts"() {
     init_add_enum();
@@ -2893,16 +2893,15 @@ var init_mutation_handler = __esm({
     mutationHandler.register("DELETE", "RELATION", deleteRelation);
     mutationHandler.register("UPDATE", "FIELD", updateField);
     mutationHandler.register("UPDATE", "ENUM", updateEnum);
-    mutation_handler_default = mutationHandler;
   }
 });
 
 // src/modules/handlers/query-render-handler.ts
 var query_render_handler_exports = {};
 __export(query_render_handler_exports, {
-  default: () => query_render_handler_default
+  queryHandler: () => queryHandler
 });
-var queryHandler, query_render_handler_default;
+var queryHandler;
 var init_query_render_handler = __esm({
   "src/modules/handlers/query-render-handler.ts"() {
     init_get_enum_relations();
@@ -2921,16 +2920,15 @@ var init_query_render_handler = __esm({
     queryHandler.register("GET", "MODELS_LIST", getModelNames);
     queryHandler.register("GET", "RELATIONS", getRelations);
     queryHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
-    query_render_handler_default = queryHandler;
   }
 });
 
 // src/modules/handlers/query-json-handler.ts
 var query_json_handler_exports = {};
 __export(query_json_handler_exports, {
-  default: () => query_json_handler_default
+  queryJsonHandler: () => queryJsonHandler
 });
-var queryJsonHandler, query_json_handler_default;
+var queryJsonHandler;
 var init_query_json_handler = __esm({
   "src/modules/handlers/query-json-handler.ts"() {
     init_get_enums2();
@@ -2949,7 +2947,6 @@ var init_query_json_handler = __esm({
     queryJsonHandler.register("GET", "MODELS_LIST", getJsonModelNames);
     queryJsonHandler.register("GET", "RELATIONS", getJsonRelations);
     queryJsonHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
-    query_json_handler_default = queryJsonHandler;
   }
 });
 

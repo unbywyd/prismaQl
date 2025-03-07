@@ -401,20 +401,8 @@ declare namespace index {
 
 declare const mutationHandler: MutationHandlerRegistry;
 
-declare namespace mutationHandler$1 {
-  export { mutationHandler as default };
-}
-
 declare const queryHandler: QueryHandlerRegistry;
-
-declare namespace queryRenderHandler {
-  export { queryHandler as default };
-}
 
 declare const queryJsonHandler: QueryHandlerRegistry;
 
-declare namespace queryJsonHandler$1 {
-  export { queryJsonHandler as default };
-}
-
-export { type DSLAction, type DSLArgs, type DSLArgsProcessor, type DSLCommand, type DSLMutationAction, type DSLOptionMap, type DSLOptions, type DSLPrismaRelationType, type DSLQueryAction, type DSLType, DslParser, FieldRelationLogger, type Handler, HandlerRegistry, type HandlerResponse, type JsonRelationTree, type ModelTree, MutationHandlerRegistry, type MutationOptions, type ParsedDSL, PrismaQlProvider, PrismaRelationCollector, type PrismaSchemaData, PrismaSchemaLoader, type PrismaSchemaLoaderOptions, QueryHandlerRegistry, type Relation, type RelationNode, type RelationStatistics, type RelationType, SchemaHelper, extractModelSummary, getManyToManyModelName, getManyToManyTableName, getRelationStatistics, handlerResponse, index$1 as jsonGetters, loadPrismaSchema, mutationHandler$1 as mutationHandler, index as mutationHandlers, parseFieldForBuilder, queryJsonHandler$1 as queryJsonHandler, queryRenderHandler, index$2 as renderGetters, useHelper, validatePrismaSchema };
+export { type DSLAction, type DSLArgs, type DSLArgsProcessor, type DSLCommand, type DSLMutationAction, type DSLOptionMap, type DSLOptions, type DSLPrismaRelationType, type DSLQueryAction, type DSLType, DslParser, FieldRelationLogger, type Handler, HandlerRegistry, type HandlerResponse, type JsonRelationTree, type ModelTree, MutationHandlerRegistry, type MutationOptions, type ParsedDSL, PrismaQlProvider, PrismaRelationCollector, type PrismaSchemaData, PrismaSchemaLoader, type PrismaSchemaLoaderOptions, QueryHandlerRegistry, type Relation, type RelationNode, type RelationStatistics, type RelationType, SchemaHelper, extractModelSummary, getManyToManyModelName, getManyToManyTableName, getRelationStatistics, handlerResponse, index$1 as jsonGetters, loadPrismaSchema, mutationHandler, index as mutationHandlers, parseFieldForBuilder, queryHandler, queryJsonHandler, index$2 as renderGetters, useHelper, validatePrismaSchema };

@@ -2515,10 +2515,6 @@ var updateField = (prismaState, data) => {
 };
 
 // src/modules/handlers/mutation-handler.ts
-var mutation_handler_exports = {};
-__export(mutation_handler_exports, {
-  default: () => mutation_handler_default
-});
 var mutationHandler = new MutationHandlerRegistry();
 mutationHandler.register("ADD", "MODEL", addModel);
 mutationHandler.register("ADD", "FIELD", addField);
@@ -2530,13 +2526,8 @@ mutationHandler.register("DELETE", "FIELD", deleteField);
 mutationHandler.register("DELETE", "RELATION", deleteRelation);
 mutationHandler.register("UPDATE", "FIELD", updateField);
 mutationHandler.register("UPDATE", "ENUM", updateEnum);
-var mutation_handler_default = mutationHandler;
 
 // src/modules/handlers/query-render-handler.ts
-var query_render_handler_exports = {};
-__export(query_render_handler_exports, {
-  default: () => query_render_handler_default
-});
 var queryHandler = new QueryHandlerRegistry();
 queryHandler.register("GET", "MODEL", getModel);
 queryHandler.register("GET", "MODELS", getModels);
@@ -2545,13 +2536,8 @@ queryHandler.register("GET", "ENUMS", getEnums);
 queryHandler.register("GET", "MODELS_LIST", getModelNames);
 queryHandler.register("GET", "RELATIONS", getRelations);
 queryHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
-var query_render_handler_default = queryHandler;
 
 // src/modules/handlers/query-json-handler.ts
-var query_json_handler_exports = {};
-__export(query_json_handler_exports, {
-  default: () => query_json_handler_default
-});
 var queryJsonHandler = new QueryHandlerRegistry();
 queryJsonHandler.register("GET", "MODEL", getJsonModel);
 queryJsonHandler.register("GET", "MODELS", getJsonModels);
@@ -2560,7 +2546,6 @@ queryJsonHandler.register("GET", "ENUMS", getJsonEnums);
 queryJsonHandler.register("GET", "MODELS_LIST", getJsonModelNames);
 queryJsonHandler.register("GET", "RELATIONS", getJsonRelations);
 queryJsonHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
-var query_json_handler_default = queryJsonHandler;
 export {
   DslParser,
   FieldRelationLogger,
@@ -2578,11 +2563,11 @@ export {
   handlerResponse,
   json_handlers_exports as jsonGetters,
   loadPrismaSchema,
-  mutation_handler_exports as mutationHandler,
+  mutationHandler,
   mutation_handlers_exports as mutationHandlers,
   parseFieldForBuilder,
-  query_json_handler_exports as queryJsonHandler,
-  query_render_handler_exports as queryRenderHandler,
+  queryHandler,
+  queryJsonHandler,
   render_handlers_exports as renderGetters,
   useHelper,
   validatePrismaSchema
