@@ -66,9 +66,13 @@ type PrismaQlDSLOptionMap = {
         RELATION: {
             type: DSLPrismaRelationType;
             pivotTable?: string | true;
+            pivotOnly?: boolean;
             fkHolder?: string;
             required?: boolean;
             relationName?: string;
+        };
+        MODEL: {
+            empty?: boolean;
         };
     };
     UPDATE: {

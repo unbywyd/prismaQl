@@ -43,10 +43,14 @@ export type PrismaQlDSLOptionMap = {
         RELATION: {
             type: DSLPrismaRelationType,
             pivotTable?: string | true,
+            pivotOnly?: boolean,
             fkHolder?: string,
             required?: boolean,
             relationName?: string,
         };
+        MODEL: {
+            empty?: boolean;
+        }
     },
     UPDATE: {
         ENUM: {
@@ -314,7 +318,7 @@ export const basePrismaQlAgsProcessor: Record<
             return { models: [modelName.trim()], fields: [fieldName.trim()] };
         },
         RELATION: (parsedArgs, rawArgs) => {
-            const [fromModel, toModel] = rawArgs?.split("TO") || [];
+            const [fromModel, toModel] = rawArgs?.split("AND") || [];
             if (!fromModel || !toModel) return parsedArgs;
             return { models: [fromModel.trim(), toModel.trim()] };
         }

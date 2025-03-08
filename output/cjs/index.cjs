@@ -230,7 +230,7 @@ var init_dsl = __esm({
           return { models: [modelName.trim()], fields: [fieldName.trim()] };
         },
         RELATION: (parsedArgs, rawArgs) => {
-          const [fromModel, toModel] = rawArgs?.split("TO") || [];
+          const [fromModel, toModel] = rawArgs?.split("AND") || [];
           if (!fromModel || !toModel) return parsedArgs;
           return { models: [fromModel.trim(), toModel.trim()] };
         }
@@ -1613,7 +1613,7 @@ var init_add_model = __esm({
     init_handler_registry();
     init_schema_helper();
     addModel = (prismaState, data) => {
-      const { args, prismaBlock } = data;
+      const { args, prismaBlock, options } = data;
       const response = handlerResponse(data);
       const modelName = (args?.models || [])[0];
       if (!modelName) {
@@ -1642,7 +1642,9 @@ var init_add_model = __esm({
           return response.error("No fields provided. Please provide a valid block in ({...}) containing a valid Prisma field description.");
         }
         let parsed;
+        const defaultFields = options?.empty ? "" : "createdAt DateTime @default(now())\nupdatedAt DateTime @updatedAt()\n deletedAt DateTime?";
         const sourceModel = `model ${modelName} {
+        ${defaultFields}
         ${prismaBlock || "id Int @id"}
         }`;
         try {
@@ -1763,10 +1765,10 @@ var init_add_relation = __esm({
       const type = options?.type;
       const models = args?.models;
       if (!models || models.length !== 2) {
-        return response.error("Two models are required for relation. Example: ADD RELATION ->[ModelA] TO ->[ModelB] (type=1:1)");
+        return response.error("Two models are required for relation. Example: ADD RELATION ->[ModelA] AND ->[ModelB] (type=1:1)");
       }
       if (!type) {
-        return response.error("Relation type is required. Valid types are: '1:1', '1:M', 'M:N'. Example: ADD RELATION ModelA TO ModelB (type=1:1)");
+        return response.error("Relation type is required. Valid types are: '1:1', '1:M', 'M:N'. Example: ADD RELATION ModelA AND ModelB (type=1:1)");
       }
       const [modelA, modelB] = models;
       const { builder } = prismaState;
@@ -1813,14 +1815,19 @@ var init_add_relation = __esm({
         } else {
           const fkA = selfPrefix(modelA, true);
           const fkB = fk(modelB);
+          const pivotOnly = options?.pivotOnly;
           const idFieldModelA = helper.getIdFieldTypeModel(modelA) || "String";
           const idFieldModelB = helper.getIdFieldTypeModel(modelB) || "String";
-          builder.model(pivotModelName).field("createdAt", "DateTime").attribute("default", ["now()"]).field(fkA, idFieldModelA).attribute("unique").field(fkB, idFieldModelB).attribute("unique").blockAttribute("id", [fkA, fkB]).field(modelA.toLowerCase(), modelA).attribute("relation", [
-            relationName,
-            `fields: [${fkA}]`,
-            `references: [id]`
-          ]);
-          builder.model(modelA).field((0, import_change_case3.camelCase)(modelB), `${pivotModelName}?`).attribute("relation", [relationName]);
+          if (!pivotOnly) {
+            builder.model(pivotModelName).field("createdAt", "DateTime").attribute("default", ["now()"]).field(fkA, idFieldModelA).attribute("unique").field(fkB, idFieldModelB).attribute("unique").blockAttribute("id", [fkA, fkB]).field(modelA.toLowerCase(), modelA).attribute("relation", [
+              relationName,
+              `fields: [${fkA}]`,
+              `references: [id]`
+            ]);
+            builder.model(modelA).field((0, import_change_case3.camelCase)(modelB), `${pivotModelName}?`).attribute("relation", [relationName]);
+          } else {
+            builder.model(pivotModelName).field(fkA, idFieldModelA).attribute("unique").field(fkB, idFieldModelB).attribute("unique").field("createdAt", "DateTime").attribute("default", ["now()"]).blockAttribute("id", [fkA, fkB]);
+          }
           return response.result(`One-to-One relation (with pivot table) added between ${modelA} and ${modelB}`);
         }
       } else if (type == "1:M") {

@@ -3,7 +3,7 @@ import { PrismaQlHandler, handlerResponse } from "../../handler-registries/handl
 import { parseFieldForBuilder, useHelper } from "../../utils/schema-helper.js";
 
 export const addModel: PrismaQlHandler<"ADD", "MODEL", "mutation"> = (prismaState, data) => {
-    const { args, prismaBlock } = data;
+    const { args, prismaBlock, options } = data;
     const response = handlerResponse(data);
 
     const modelName = (args?.models || [])[0];
@@ -23,7 +23,9 @@ export const addModel: PrismaQlHandler<"ADD", "MODEL", "mutation"> = (prismaStat
         }
         let parsed: ReturnType<typeof getSchema>;
 
+        const defaultFields = options?.empty ? "" : "createdAt DateTime @default(now())\nupdatedAt DateTime @updatedAt()\n deletedAt DateTime?";
         const sourceModel = `model ${modelName} {
+        ${defaultFields}
         ${prismaBlock || "id Int @id"}
         }`;
 

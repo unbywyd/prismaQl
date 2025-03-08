@@ -11,11 +11,11 @@ export const addRelation: PrismaQlHandler<"ADD", "RELATION", "mutation"> = (pris
 
     const models = args?.models;
     if (!models || models.length !== 2) {
-        return response.error("Two models are required for relation. Example: ADD RELATION ->[ModelA] TO ->[ModelB] (type=1:1)");
+        return response.error("Two models are required for relation. Example: ADD RELATION ->[ModelA] AND ->[ModelB] (type=1:1)");
     }
 
     if (!type) {
-        return response.error("Relation type is required. Valid types are: '1:1', '1:M', 'M:N'. Example: ADD RELATION ModelA TO ModelB (type=1:1)");
+        return response.error("Relation type is required. Valid types are: '1:1', '1:M', 'M:N'. Example: ADD RELATION ModelA AND ModelB (type=1:1)");
     }
 
     const [modelA, modelB] = models;
@@ -75,23 +75,33 @@ export const addRelation: PrismaQlHandler<"ADD", "RELATION", "mutation"> = (pris
         } else {
             const fkA = selfPrefix(modelA, true);
             const fkB = fk(modelB);
+            const pivotOnly = options?.pivotOnly;
 
             const idFieldModelA = (helper.getIdFieldTypeModel(modelA) || 'String') as string;
             const idFieldModelB = (helper.getIdFieldTypeModel(modelB) || 'String') as string;
-            builder.model(pivotModelName!)
-                .field("createdAt", "DateTime").attribute("default", ["now()"])
-                .field(fkA, idFieldModelA).attribute("unique")
-                .field(fkB, idFieldModelB).attribute("unique")
-                .blockAttribute("id", [fkA, fkB])
-                .field(modelA.toLowerCase(), modelA).attribute("relation", [
-                    relationName,
-                    `fields: [${fkA}]`,
-                    `references: [id]`
-                ]);
+            if (!pivotOnly) {
+                builder.model(pivotModelName!)
+                    .field("createdAt", "DateTime").attribute("default", ["now()"])
+                    .field(fkA, idFieldModelA).attribute("unique")
+                    .field(fkB, idFieldModelB).attribute("unique")
+                    .blockAttribute("id", [fkA, fkB])
+                    .field(modelA.toLowerCase(), modelA).attribute("relation", [
+                        relationName,
+                        `fields: [${fkA}]`,
+                        `references: [id]`
+                    ]);
 
-            builder.model(modelA)
-                .field(camelCase(modelB), `${pivotModelName}?`)
-                .attribute("relation", [relationName]);
+                builder.model(modelA)
+                    .field(camelCase(modelB), `${pivotModelName}?`)
+                    .attribute("relation", [relationName]);
+            } else {
+                builder.model(pivotModelName!)
+                    .field(fkA, idFieldModelA).attribute("unique")
+                    .field(fkB, idFieldModelB).attribute("unique")
+                    .field("createdAt", "DateTime").attribute("default", ["now()"])
+                    .blockAttribute("id", [fkA, fkB]);
+
+            }
 
             return response.result(`One-to-One relation (with pivot table) added between ${modelA} and ${modelB}`);
 
