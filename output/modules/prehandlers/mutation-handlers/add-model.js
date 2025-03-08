@@ -2,7 +2,7 @@ import { getSchema } from "@mrleebo/prisma-ast";
 import { handlerResponse } from "../../handler-registries/handler-registry.js";
 import { parseFieldForBuilder, useHelper } from "../../utils/schema-helper.js";
 export const addModel = (prismaState, data) => {
-    const { args, prismaBlock } = data;
+    const { args, prismaBlock, options } = data;
     const response = handlerResponse(data);
     const modelName = (args?.models || [])[0];
     if (!modelName) {
@@ -18,7 +18,9 @@ export const addModel = (prismaState, data) => {
             return response.error("No fields provided. Please provide a valid block in ({...}) containing a valid Prisma field description.");
         }
         let parsed;
+        const defaultFields = options?.empty ? "" : "createdAt DateTime @default(now())\nupdatedAt DateTime @updatedAt()\n deletedAt DateTime?";
         const sourceModel = `model ${modelName} {
+        ${defaultFields}
         ${prismaBlock || "id Int @id"}
         }`;
         try {

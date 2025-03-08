@@ -1,4 +1,4 @@
-import { Schema, Model, Field, Enum } from "@mrleebo/prisma-ast";
+import { Schema, Model, Field, Enum, Block } from "@mrleebo/prisma-ast";
 import { PrismaQlSchemaData } from "../prisma-schema-loader.js";
 import { Property } from "@mrleebo/prisma-ast";
 /**
@@ -30,6 +30,7 @@ export declare class PrismaQlSchemaHelper {
         field: Field;
     }>;
     getRelations(): Field[];
+    getGenerators(): Block[];
     getModelRelations(modelName: string): Field[];
 }
 export declare const useHelper: (schema: Schema | PrismaQlSchemaData) => PrismaQlSchemaHelper;

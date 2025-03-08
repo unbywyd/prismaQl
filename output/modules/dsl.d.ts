@@ -1,6 +1,6 @@
 import { PrismaQlRelationType } from "./field-relation-collector.js";
 export type BasePrismaQlDSLAction = "GET" | "ADD" | "DELETE" | "UPDATE" | "PRINT" | "VALIDATE";
-export type BasePrismaQLDSLCommand = "MODELS" | "MODEL" | "FIELD" | "FIELDS" | "RELATIONS" | "ENUM_RELATIONS" | "ENUMS" | "ENUM" | "MODELS_LIST" | "RELATION";
+export type BasePrismaQLDSLCommand = "MODELS" | "MODEL" | "FIELD" | "FIELDS" | "RELATIONS" | "DB" | "ENUM_RELATIONS" | "ENUMS" | "ENUM" | "MODELS_LIST" | "RELATION" | "GENERATOR" | "GENERATORS";
 export type PrismaQlDSLAction<A extends string = BasePrismaQlDSLAction> = A;
 export type PrismaQLDSLCommand<C extends string = BasePrismaQLDSLCommand> = C;
 export type PrismaQlDSLType = "query" | "mutation";
@@ -10,6 +10,7 @@ export type PrismaQLDSLArgs<A extends PrismaQlDSLAction, C extends PrismaQLDSLCo
     models?: string[];
     fields?: string[];
     enums?: string[];
+    generators?: string[];
 };
 export type DSLPrismaRelationType = PrismaQlRelationType;
 export type PrismaQlDSLOptionMap = {
@@ -25,14 +26,26 @@ export type PrismaQlDSLOptionMap = {
         RELATION: {
             type: DSLPrismaRelationType;
             pivotTable?: string | true;
+            pivotOnly?: boolean;
             fkHolder?: string;
             required?: boolean;
             relationName?: string;
+        };
+        MODEL: {
+            empty?: boolean;
         };
     };
     UPDATE: {
         ENUM: {
             replace: boolean;
+        };
+        GENERATOR: {
+            output?: string;
+            provider?: string;
+        };
+        DB: {
+            provider?: string;
+            url?: string;
         };
     };
     DELETE: {
@@ -75,8 +88,34 @@ export declare const basePrismaQlAgsProcessor: Record<PrismaQlDSLAction, {
     default: PrismaQlDSLArgsProcessor<any, any>;
 } & Partial<Record<PrismaQLDSLCommand, PrismaQlDSLArgsProcessor<any, any>>>>;
 export declare const prismaQlParser: PrismaQlDslParser<BasePrismaQlDSLAction, BasePrismaQLDSLCommand>;
-type CustomAction = BasePrismaQlDSLAction | "CUSTOM_ACTION";
-type CustomCommand = BasePrismaQLDSLCommand | "CUSTOM_COMMAND";
-export declare const customParser: PrismaQlDslParser<CustomAction, CustomCommand>;
-export {};
+/**
+ * Example of extending the base parser with custom actions and commands
+ *
+type CustomAction = BasePrismaQlDSLAction | "SAY";
+type CustomCommand = BasePrismaQLDSLCommand | "HI";
+type CustomParserArgsProcessors = Record<
+    CustomAction,
+    {
+        default: PrismaQlDSLArgsProcessor<any, any>;
+    } & Partial<Record<CustomCommand, PrismaQlDSLArgsProcessor<any, any>>>
+>;
+
+const customArgsProcessors: CustomParserArgsProcessors = {
+    ...basePrismaQlAgsProcessor,
+    SAY: {
+        default: (parsedArgs) => parsedArgs,
+        HI: (parsedArgs, rawArgs) => {
+            return {
+                models: rawArgs ? rawArgs.split(",").map(m => m.trim()) : [],
+            };
+        },
+    },
+};
+
+export const customParser = new PrismaQlDslParser<CustomAction, CustomCommand>(
+    customArgsProcessors
+);
+customParser.registerCommand("SAY", "HI", "query");
+console.log('test', customParser.parseCommand('SAY HI model1, model2;'));
+*/ 
 //# sourceMappingURL=dsl.d.ts.map

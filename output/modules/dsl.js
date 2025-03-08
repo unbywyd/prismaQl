@@ -1,9 +1,10 @@
+import chalk from "chalk";
 const DSL_PATTERN = /^([A-Z]+)(?:\s+([A-Z_]+))?(?:\s+([\w\s,*]+))?(?:\s*\(\{([\s\S]*?)\}\))?(?:\s*\(([^)]*?)\))?$/i;
 const ACTION_COMMAND_MAP = {
-    GET: ["MODELS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
-    ADD: ["MODEL", "FIELD", "RELATION", "ENUM"],
-    DELETE: ["MODEL", "FIELD", "RELATION", "ENUM"],
-    UPDATE: ["FIELD", "ENUM"],
+    GET: ["MODELS", "DB", "GENERATORS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
+    ADD: ["MODEL", "GENERATOR", "FIELD", "RELATION", "ENUM"],
+    DELETE: ["MODEL", "FIELD", "RELATION", "ENUM", "GENERATOR"],
+    UPDATE: ["FIELD", "ENUM", "GENERATOR", "DB"],
     PRINT: [],
     VALIDATE: [],
 };
@@ -37,6 +38,18 @@ export class PrismaQlDslParser {
     parseCommand(input) {
         const trimmed = input.trim();
         if (!trimmed.endsWith(";")) {
+            const errorMessage = `
+${chalk.red("Syntax Error: Missing semicolon (;) at the end of the command.")}
+
+${chalk.yellow("Each DSL command must end with a semicolon.")} 
+For example:
+
+    ${chalk.green("GET MODELS;")}
+    ${chalk.green("DELETE MODEL Product;")}
+
+Please check your input and try again.
+`;
+            console.error(errorMessage);
             throw new Error("DSL command must end with a semicolon.");
         }
         const raw = trimmed.slice(0, -1).trim();
@@ -50,11 +63,15 @@ export class PrismaQlDslParser {
         let prismaBlockStr = match[4]?.trim() || undefined;
         if (prismaBlockStr) {
             prismaBlockStr = prismaBlockStr.replace(/'/g, '"');
-            prismaBlockStr = prismaBlockStr.replace(/'/g, '"');
             prismaBlockStr = prismaBlockStr.replace(/\\n/g, "\n");
             prismaBlockStr = prismaBlockStr.replace(/\|/g, "\n");
         }
-        const optionsStr = match[5]?.trim() || undefined;
+        let optionsStr = match[5]?.trim() || undefined;
+        if (optionsStr) {
+            optionsStr = optionsStr.replace(/'/g, '"');
+            optionsStr = optionsStr.replace(/\\n/g, "\n");
+            optionsStr = optionsStr.replace(/\|/g, "\n");
+        }
         if (!(actionStr in ACTION_COMMAND_MAP) && !(actionStr in this.customCommands)) {
             throw new Error(`Unsupported action "${actionStr}". Supported actions: ${Object.keys(ACTION_COMMAND_MAP).join(", ")}`);
         }
@@ -183,6 +200,9 @@ export const basePrismaQlAgsProcessor = {
         MODEL: (_, rawArgs) => {
             return { models: rawArgs ? rawArgs.split(",").map(m => m.trim()) : [] };
         },
+        GENERATOR: (parsedArgs, rawArgs) => {
+            return { generators: rawArgs ? rawArgs.split(",").map(g => g.trim()) : [] };
+        },
         ENUM: (_, rawArgs) => {
             return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
         },
@@ -193,7 +213,7 @@ export const basePrismaQlAgsProcessor = {
             return { models: [modelName.trim()], fields: [fieldName.trim()] };
         },
         RELATION: (parsedArgs, rawArgs) => {
-            const [fromModel, toModel] = rawArgs?.split("TO") || [];
+            const [fromModel, toModel] = rawArgs?.split("AND") || [];
             if (!fromModel || !toModel)
                 return parsedArgs;
             return { models: [fromModel.trim(), toModel.trim()] };
@@ -215,6 +235,9 @@ export const basePrismaQlAgsProcessor = {
         },
         RELATION: (_, rawArgs) => {
             return { models: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
+        },
+        GENERATOR: (_, rawArgs) => {
+            return { generators: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
         }
     },
     UPDATE: {
@@ -230,6 +253,9 @@ export const basePrismaQlAgsProcessor = {
         },
         ENUM: (_, rawArgs) => {
             return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
+        },
+        GENERATOR: (parsedArgs, rawArgs) => {
+            return { generators: rawArgs ? rawArgs.split(",").map(g => g.trim()) : [] };
         }
     },
     PRINT: {
@@ -240,19 +266,34 @@ export const basePrismaQlAgsProcessor = {
     },
 };
 export const prismaQlParser = new PrismaQlDslParser(basePrismaQlAgsProcessor);
-const customArgsProcessors = {
-    // Берём все базовые обработчики как есть:
+/**
+ * Example of extending the base parser with custom actions and commands
+ *
+type CustomAction = BasePrismaQlDSLAction | "SAY";
+type CustomCommand = BasePrismaQLDSLCommand | "HI";
+type CustomParserArgsProcessors = Record<
+    CustomAction,
+    {
+        default: PrismaQlDSLArgsProcessor<any, any>;
+    } & Partial<Record<CustomCommand, PrismaQlDSLArgsProcessor<any, any>>>
+>;
+
+const customArgsProcessors: CustomParserArgsProcessors = {
     ...basePrismaQlAgsProcessor,
-    // Добавляем свой
-    CUSTOM_ACTION: {
+    SAY: {
         default: (parsedArgs) => parsedArgs,
-        CUSTOM_COMMAND: (parsedArgs, rawArgs) => {
+        HI: (parsedArgs, rawArgs) => {
             return {
                 models: rawArgs ? rawArgs.split(",").map(m => m.trim()) : [],
             };
         },
     },
 };
-export const customParser = new PrismaQlDslParser(customArgsProcessors);
-console.log('test', customParser.parseCommand('CUSTOM_ACTION CUSTOM_COMMAND model1, model2;'));
+
+export const customParser = new PrismaQlDslParser<CustomAction, CustomCommand>(
+    customArgsProcessors
+);
+customParser.registerCommand("SAY", "HI", "query");
+console.log('test', customParser.parseCommand('SAY HI model1, model2;'));
+*/ 
 //# sourceMappingURL=dsl.js.map

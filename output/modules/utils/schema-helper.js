@@ -94,6 +94,10 @@ export class PrismaQlSchemaHelper {
             .flatMap((model) => model.properties)
             .filter((prop) => prop.type === "field" && prop.fieldType === "relation");
     }
+    getGenerators() {
+        return this.parsedSchema.list
+            .filter((item) => item.type === "generator");
+    }
     getModelRelations(modelName) {
         const model = this.getModelByName(modelName);
         if (!model)
