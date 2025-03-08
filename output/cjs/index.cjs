@@ -36,9 +36,10 @@ __export(dsl_exports, {
   basePrismaQlAgsProcessor: () => basePrismaQlAgsProcessor,
   prismaQlParser: () => prismaQlParser
 });
-var DSL_PATTERN, ACTION_COMMAND_MAP, PrismaQlDslParser, basePrismaQlAgsProcessor, prismaQlParser;
+var import_chalk, DSL_PATTERN, ACTION_COMMAND_MAP, PrismaQlDslParser, basePrismaQlAgsProcessor, prismaQlParser;
 var init_dsl = __esm({
   "src/modules/dsl.ts"() {
+    import_chalk = __toESM(require("chalk"), 1);
     DSL_PATTERN = /^([A-Z]+)(?:\s+([A-Z_]+))?(?:\s+([\w\s,*]+))?(?:\s*\(\{([\s\S]*?)\}\))?(?:\s*\(([^)]*?)\))?$/i;
     ACTION_COMMAND_MAP = {
       GET: ["MODELS", "DB", "GENERATORS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
@@ -77,6 +78,18 @@ var init_dsl = __esm({
       parseCommand(input) {
         const trimmed = input.trim();
         if (!trimmed.endsWith(";")) {
+          const errorMessage = `
+${import_chalk.default.red("Syntax Error: Missing semicolon (;) at the end of the command.")}
+
+${import_chalk.default.yellow("Each DSL command must end with a semicolon.")} 
+For example:
+
+    ${import_chalk.default.green("GET MODELS;")}
+    ${import_chalk.default.green("DELETE MODEL Product;")}
+
+Please check your input and try again.
+`;
+          console.error(errorMessage);
           throw new Error("DSL command must end with a semicolon.");
         }
         const raw = trimmed.slice(0, -1).trim();
@@ -360,7 +373,7 @@ __export(prisma_schema_loader_exports, {
   PrismaQlSchemaLoader: () => PrismaQlSchemaLoader,
   default: () => prisma_schema_loader_default
 });
-var import_fs2, import_fs_extra, import_path2, import_prisma_ast, import_internals2, import_prismalux, import_chalk, getDMMF2, HighlightPrismaSchema, PrismaQlSchemaLoader, prisma_schema_loader_default;
+var import_fs2, import_fs_extra, import_path2, import_prisma_ast, import_internals2, import_prismalux, import_chalk2, getDMMF2, HighlightPrismaSchema, PrismaQlSchemaLoader, prisma_schema_loader_default;
 var init_prisma_schema_loader = __esm({
   "src/modules/prisma-schema-loader.ts"() {
     import_fs2 = __toESM(require("fs"), 1);
@@ -371,7 +384,7 @@ var init_prisma_schema_loader = __esm({
     init_load_prisma_schema();
     import_internals2 = __toESM(require("@prisma/internals"), 1);
     import_prismalux = require("prismalux");
-    import_chalk = __toESM(require("chalk"), 1);
+    import_chalk2 = __toESM(require("chalk"), 1);
     ({ getDMMF: getDMMF2 } = import_internals2.default);
     HighlightPrismaSchema = new import_prismalux.PrismaHighlighter();
     PrismaQlSchemaLoader = class {
@@ -453,7 +466,7 @@ var init_prisma_schema_loader = __esm({
         for (let i = 0; i < messages.length; i++) {
           const message = messages[i];
           const commitNumber = i + 1;
-          console.log(import_chalk.default.grey(`Commit ${commitNumber}:`), import_chalk.default.cyanBright(message));
+          console.log(import_chalk2.default.grey(`Commit ${commitNumber}:`), import_chalk2.default.cyanBright(message));
         }
         let outputPath = sourcePath;
         if (sourcePath && !import_path2.default.isAbsolute(sourcePath)) {
@@ -479,8 +492,8 @@ var init_prisma_schema_loader = __esm({
         }
         const updatedsourcePrismaSchema = this.prismaState.builder.print({ sort: true });
         import_fs2.default.writeFileSync(finalPath, updatedsourcePrismaSchema, "utf-8");
-        console.log(import_chalk.default.greenBright(`\u2705 Schema saved successfully to ${finalPath}`));
-        console.log(import_chalk.default.grey(`\u{1F4C5} Timestamp: ${(/* @__PURE__ */ new Date()).toLocaleString()}`));
+        console.log(import_chalk2.default.greenBright(`\u2705 Schema saved successfully to ${finalPath}`));
+        console.log(import_chalk2.default.grey(`\u{1F4C5} Timestamp: ${(/* @__PURE__ */ new Date()).toLocaleString()}`));
       }
       print() {
         if (!this.prismaState) {
@@ -903,11 +916,11 @@ __export(field_relation_logger_exports, {
   PrismaQlFieldRelationLogger: () => PrismaQlFieldRelationLogger,
   getRelationStatistics: () => getRelationStatistics
 });
-var import_treeify, import_chalk2, import_boxen, import_internals4, import_fs3, getDMMF4, collector, PrismaQlFieldRelationLogger, getRelationStatistics;
+var import_treeify, import_chalk3, import_boxen, import_internals4, import_fs3, getDMMF4, collector, PrismaQlFieldRelationLogger, getRelationStatistics;
 var init_field_relation_logger = __esm({
   "src/modules/field-relation-logger.ts"() {
     import_treeify = __toESM(require("treeify"), 1);
-    import_chalk2 = __toESM(require("chalk"), 1);
+    import_chalk3 = __toESM(require("chalk"), 1);
     import_boxen = __toESM(require("boxen"), 1);
     init_field_relation_collector();
     import_internals4 = __toESM(require("@prisma/internals"), 1);
@@ -975,24 +988,24 @@ var init_field_relation_logger = __esm({
           const name = relation.fieldName || relation.modelName;
           const relationAlias = `(as ${relation.fieldName || relation.relationName})`;
           const isSelfRelation = relation.modelName === relation.relatedModel;
-          const selfRelationIcon = isSelfRelation ? import_chalk2.default.yellow("\u{1F501}") : "";
-          let keyInfo = import_chalk2.default.gray("[-]");
+          const selfRelationIcon = isSelfRelation ? import_chalk3.default.yellow("\u{1F501}") : "";
+          let keyInfo = import_chalk3.default.gray("[-]");
           if (relation.foreignKey) {
             const direction = relation.relationDirection === "backward" ? "\u2190" : "\u2192";
-            keyInfo = `[FK: ${import_chalk2.default.blue(relation.foreignKey)} ${direction} ${import_chalk2.default.green(relation.referenceKey || "id")}]`;
+            keyInfo = `[FK: ${import_chalk3.default.blue(relation.foreignKey)} ${direction} ${import_chalk3.default.green(relation.referenceKey || "id")}]`;
           } else if (relation.relationTable) {
-            keyInfo = `[M:N via ${import_chalk2.default.yellow(relation.relationTable)}]`;
+            keyInfo = `[M:N via ${import_chalk3.default.yellow(relation.relationTable)}]`;
           }
           if (relation.relationTable && relation.relationTable !== relation.modelName) {
             if (!table[relation.relationTable]) {
               table[relation.relationTable] = {};
             }
-            table[relation.relationTable][`\u2192 ${import_chalk2.default.yellow(relation.modelName)}:${import_chalk2.default.cyan(relation.fieldName)} [FK: ${import_chalk2.default.blue(relation.foreignKey || "?")} \u2192 ${import_chalk2.default.green(relation.referenceKey || "?")}]`] = {};
-            table[relation.relationTable][`\u2192 ${import_chalk2.default.yellow(relation.relatedModel)}:${import_chalk2.default.cyan(relation.inverseField)} [FK: ${import_chalk2.default.blue(relation.foreignKey || "?")} \u2192 ${import_chalk2.default.green(relation.referenceKey || "?")}]`] = {};
+            table[relation.relationTable][`\u2192 ${import_chalk3.default.yellow(relation.modelName)}:${import_chalk3.default.cyan(relation.fieldName)} [FK: ${import_chalk3.default.blue(relation.foreignKey || "?")} \u2192 ${import_chalk3.default.green(relation.referenceKey || "?")}]`] = {};
+            table[relation.relationTable][`\u2192 ${import_chalk3.default.yellow(relation.relatedModel)}:${import_chalk3.default.cyan(relation.inverseField)} [FK: ${import_chalk3.default.blue(relation.foreignKey || "?")} \u2192 ${import_chalk3.default.green(relation.referenceKey || "?")}]`] = {};
           }
-          const constraints = relation?.constraints?.length ? `Constraints: ${import_chalk2.default.magenta(relation.constraints.join(", "))}` : "";
+          const constraints = relation?.constraints?.length ? `Constraints: ${import_chalk3.default.magenta(relation.constraints.join(", "))}` : "";
           const isList = (relationType === "1:M" || relationType === "M:N") && !relation?.foreignKey;
-          let relationLabel = `\u2192 ${import_chalk2.default.yellow(relation.relatedModel + (isList ? "[]" : ""))}:${import_chalk2.default.cyan(name)} ${relationAlias} ${import_chalk2.default.red(relationType)} ${keyInfo} ${constraints} ${selfRelationIcon}`;
+          let relationLabel = `\u2192 ${import_chalk3.default.yellow(relation.relatedModel + (isList ? "[]" : ""))}:${import_chalk3.default.cyan(name)} ${relationAlias} ${import_chalk3.default.red(relationType)} ${keyInfo} ${constraints} ${selfRelationIcon}`;
           if (!table[relationLabel]) {
             table[relationLabel] = {};
           }
@@ -1000,7 +1013,7 @@ var init_field_relation_logger = __esm({
           models.add(relation.relatedModel);
           relationsSet.add(`${rootModel} -> ${relation.relatedModel}`);
         }
-        trees.push({ [import_chalk2.default.bold(rootModel)]: table });
+        trees.push({ [import_chalk3.default.bold(rootModel)]: table });
         for (const relation of modelRelations) {
           const subTree = this.buildModelTrees(relation.relatedModel, relations, maxDepth, depth + 1, visitedModels);
           trees = trees.concat(subTree.trees);
@@ -1068,17 +1081,17 @@ var init_field_relation_logger = __esm({
         }
         const { models, relations: rels, trees } = this.buildModelTrees(rootModel, this.relations, maxDepth);
         const stats = this.collectRelationStatistics(models, rels, rootModel, maxDepth);
-        let output = `${import_chalk2.default.green.bold("\u{1F4CA} Relation Tree Statistics")}
+        let output = `${import_chalk3.default.green.bold("\u{1F4CA} Relation Tree Statistics")}
 `;
-        output += `${import_chalk2.default.yellow("Model:")} ${import_chalk2.default.bold(rootModel)}
+        output += `${import_chalk3.default.yellow("Model:")} ${import_chalk3.default.bold(rootModel)}
 `;
-        output += `${import_chalk2.default.cyan("Max Depth:")} ${import_chalk2.default.bold(maxDepth)}
+        output += `${import_chalk3.default.cyan("Max Depth:")} ${import_chalk3.default.bold(maxDepth)}
 `;
-        output += `${import_chalk2.default.blue("Related Models:")} ${import_chalk2.default.bold(stats.uniqueModels)}
+        output += `${import_chalk3.default.blue("Related Models:")} ${import_chalk3.default.bold(stats.uniqueModels)}
 `;
-        output += `${import_chalk2.default.magenta("Total Relations:")} ${import_chalk2.default.bold(stats.totalRelations)}
+        output += `${import_chalk3.default.magenta("Total Relations:")} ${import_chalk3.default.bold(stats.totalRelations)}
 `;
-        output += `${import_chalk2.default.redBright("Direct Relations:")} ${import_chalk2.default.bold(stats.directRelations)}
+        output += `${import_chalk3.default.redBright("Direct Relations:")} ${import_chalk3.default.bold(stats.directRelations)}
 `;
         let treeOutput = "";
         for (const tree of trees) {
@@ -1086,8 +1099,8 @@ var init_field_relation_logger = __esm({
         }
         const results = [...rels.values()].filter((el) => {
           return el.startsWith(rootModel) || el.endsWith(rootModel);
-        }).map((r) => import_chalk2.default.gray(r)).join("\n");
-        const relsList = `${import_chalk2.default.white.bold("\u{1F517} Direct Relations")}
+        }).map((r) => import_chalk3.default.gray(r)).join("\n");
+        const relsList = `${import_chalk3.default.white.bold("\u{1F517} Direct Relations")}
 ${results}`;
         return (0, import_boxen.default)(output.trim() + "\n" + treeOutput.trim() + `
 
@@ -1170,10 +1183,10 @@ var prisma_ql_provider_exports = {};
 __export(prisma_ql_provider_exports, {
   PrismaQlProvider: () => PrismaQlProvider
 });
-var import_chalk3, import_prismalux2, highlightPrismaSchema, PrismaQlProvider;
+var import_chalk4, import_prismalux2, highlightPrismaSchema, PrismaQlProvider;
 var init_prisma_ql_provider = __esm({
   "src/modules/prisma-ql-provider.ts"() {
-    import_chalk3 = __toESM(require("chalk"), 1);
+    import_chalk4 = __toESM(require("chalk"), 1);
     init_dsl();
     init_handler_registry();
     init_prisma_validation();
@@ -1200,7 +1213,7 @@ var init_prisma_ql_provider = __esm({
             }
             responses.push(result);
           } catch (e) {
-            console.log(import_chalk3.default.red(`Error processing command: ${e.message}`));
+            console.log(import_chalk4.default.red(`Error processing command: ${e.message}`));
             throw e;
           }
         }
@@ -1265,7 +1278,7 @@ var init_prisma_ql_provider = __esm({
               throw result.error;
             }
           }
-          console.log("\u2705", import_chalk3.default.gray(displayCommand), import_chalk3.default.green(`Dry run success!`));
+          console.log("\u2705", import_chalk4.default.gray(displayCommand), import_chalk4.default.green(`Dry run success!`));
         } catch (e) {
           throw new Error(`Modification failed: ${e.message}`);
         }
@@ -1274,7 +1287,7 @@ var init_prisma_ql_provider = __esm({
         if (validation instanceof Error) {
           throw new Error(`Modification failed: ${validation.message}`);
         }
-        console.log("\u2705", import_chalk3.default.gray(displayCommand), import_chalk3.default.green(`Validation success!`));
+        console.log("\u2705", import_chalk4.default.gray(displayCommand), import_chalk4.default.green(`Validation success!`));
         return updatedSchema;
       }
       async mutation(input, options = {}) {
@@ -1301,7 +1314,7 @@ var init_prisma_ql_provider = __esm({
           this.mutationHandler.execute(parsedCommand.action, parsedCommand.command, state, parsedCommand);
           this.mutationState.push(parsedCommand);
           const displayCommand = `${parsedCommand.action} ${parsedCommand.command} > `;
-          console.log("\u2705", import_chalk3.default.white(displayCommand), import_chalk3.default.green("Mutation success"));
+          console.log("\u2705", import_chalk4.default.white(displayCommand), import_chalk4.default.green("Mutation success"));
         } catch (e) {
           throw new Error(`Modification failed: ${e.message}`);
         }
@@ -1985,10 +1998,10 @@ var init_delete_model = __esm({
 });
 
 // src/modules/prehandlers/mutation-handlers/delete-relations.ts
-var import_chalk4, deleteRelation;
+var import_chalk5, deleteRelation;
 var init_delete_relations = __esm({
   "src/modules/prehandlers/mutation-handlers/delete-relations.ts"() {
-    import_chalk4 = __toESM(require("chalk"), 1);
+    import_chalk5 = __toESM(require("chalk"), 1);
     init_handler_registry();
     deleteRelation = (prismaState, data) => {
       const { args, options } = data;
@@ -2013,7 +2026,7 @@ var init_delete_relations = __esm({
         return response.error(`Field ${fieldA} specified for ${modelA} but no field specified for ${modelB}`);
       }
       if (options?.relationName) {
-        console.log(import_chalk4.default.yellow(`Relation name is specified. Attempting to remove relation by name`));
+        console.log(import_chalk5.default.yellow(`Relation name is specified. Attempting to remove relation by name`));
         const fieldsA = modelARef.properties.filter(
           (prop) => prop.type === "field" && (prop.fieldType === modelB || prop.fieldType === modelA)
         );
@@ -2049,7 +2062,7 @@ var init_delete_relations = __esm({
         return response.result(`Relation ${options.relationName} removed between ${modelA} and ${modelB}`);
       }
       if (!fieldA && !fieldB) {
-        console.log(import_chalk4.default.yellow(`No fields specified. Attempting to remove all relations between ${modelA} and ${modelB}`));
+        console.log(import_chalk5.default.yellow(`No fields specified. Attempting to remove all relations between ${modelA} and ${modelB}`));
         const fieldsToRemoveA = modelARef.properties.filter(
           (prop) => prop.type === "field" && prop.fieldType === modelB
         );
@@ -2241,10 +2254,10 @@ var init_add_generator = __esm({
 function normalizeQuotes(input) {
   return input.replace(/^[\'"]+/, "").replace(/[\'"]+$/, "");
 }
-var import_chalk5, import_prisma_ast6, updateGenerator;
+var import_chalk6, import_prisma_ast6, updateGenerator;
 var init_update_generator = __esm({
   "src/modules/prehandlers/mutation-handlers/update-generator.ts"() {
-    import_chalk5 = __toESM(require("chalk"), 1);
+    import_chalk6 = __toESM(require("chalk"), 1);
     init_handler_registry();
     import_prisma_ast6 = require("@mrleebo/prisma-ast");
     updateGenerator = (prismaState, data) => {
@@ -2265,7 +2278,7 @@ var init_update_generator = __esm({
         if (!prismaBlock) {
           return response.error("No generator block provided. Example: 'ADD GENERATOR GeneratorName ->[({key: value})];'");
         }
-        console.log(import_chalk5.default.yellow(`Warning: generator block provided. Generator ${generatorName} will be replaced`));
+        console.log(import_chalk6.default.yellow(`Warning: generator block provided. Generator ${generatorName} will be replaced`));
         builder.drop(prevGenerator.name);
         const sourceModel = `generator ${generatorName} {
         ${prismaBlock}
@@ -2282,9 +2295,9 @@ var init_update_generator = __esm({
         const generator = builder.generator(generatorName);
         const otherOptions = Object.keys(options).filter((key) => key !== "output" && key !== "provider");
         if (otherOptions.length) {
-          console.log(import_chalk5.default.yellow(`Warning: unknown options ${otherOptions.join(", ")} will be skipped`));
+          console.log(import_chalk6.default.yellow(`Warning: unknown options ${otherOptions.join(", ")} will be skipped`));
           const validOptions = ["output", "provider"];
-          console.log(import_chalk5.default.yellow(`Valid options are: ${validOptions.join(", ")}`));
+          console.log(import_chalk6.default.yellow(`Valid options are: ${validOptions.join(", ")}`));
         }
         if (options?.output) {
           generator.assignment("output", normalizeQuotes(options.output));
@@ -2375,10 +2388,10 @@ var init_mutation_handler = __esm({
 });
 
 // src/modules/prehandlers/render-handlers/get-model-names.ts
-var import_chalk6, import_boxen2, formatColumns, sortModelNames, getModelNames;
+var import_chalk7, import_boxen2, formatColumns, sortModelNames, getModelNames;
 var init_get_model_names = __esm({
   "src/modules/prehandlers/render-handlers/get-model-names.ts"() {
-    import_chalk6 = __toESM(require("chalk"), 1);
+    import_chalk7 = __toESM(require("chalk"), 1);
     init_handler_registry();
     init_schema_helper();
     import_boxen2 = __toESM(require("boxen"), 1);
@@ -2405,13 +2418,13 @@ var init_get_model_names = __esm({
       const response = handlerResponse(data);
       const models = useHelper(prismaState).getModels();
       if (models.length === 0) {
-        return response.result(import_chalk6.default.red.bold("\u274C No models in Prisma schema."));
+        return response.result(import_chalk7.default.red.bold("\u274C No models in Prisma schema."));
       }
       const modelNames = models.map((model) => model.name);
       sortModelNames(modelNames);
       const columns = modelNames.length > 6 ? 3 : 2;
-      const stats = `${import_chalk6.default.white("\u{1F4CA} Total models:")} ${import_chalk6.default.white.bold(modelNames.length)}`;
-      const formattedModels = formatColumns(modelNames.map((name) => `${import_chalk6.default.hex("#11FF00")("\u2022")} ${import_chalk6.default.bold(name)}`), columns);
+      const stats = `${import_chalk7.default.white("\u{1F4CA} Total models:")} ${import_chalk7.default.white.bold(modelNames.length)}`;
+      const formattedModels = formatColumns(modelNames.map((name) => `${import_chalk7.default.hex("#11FF00")("\u2022")} ${import_chalk7.default.bold(name)}`), columns);
       return response.result((0, import_boxen2.default)(`${stats}
 
 ${formattedModels}`, {
@@ -2427,10 +2440,10 @@ ${formattedModels}`, {
 });
 
 // src/modules/prehandlers/render-handlers/get-enum-relations.ts
-var import_chalk7, import_boxen3, getEnumRelations;
+var import_chalk8, import_boxen3, getEnumRelations;
 var init_get_enum_relations = __esm({
   "src/modules/prehandlers/render-handlers/get-enum-relations.ts"() {
-    import_chalk7 = __toESM(require("chalk"), 1);
+    import_chalk8 = __toESM(require("chalk"), 1);
     init_handler_registry();
     init_schema_helper();
     import_boxen3 = __toESM(require("boxen"), 1);
@@ -2453,8 +2466,8 @@ var init_get_enum_relations = __esm({
         return response.result(`Enum ${enumName} has no relations`);
       }
       const columns = relations.length > 6 ? 3 : 2;
-      const formattedModels = formatColumns(relations.map((rel) => `${import_chalk7.default.hex("#11FF00")("\u2022")} ${import_chalk7.default.bold(rel.model.name)} -> ${import_chalk7.default.bold(rel.field.name)}`), columns);
-      const stats = `${import_chalk7.default.white("\u{1F4CA} Total relations:")} ${import_chalk7.default.white.bold(total)}`;
+      const formattedModels = formatColumns(relations.map((rel) => `${import_chalk8.default.hex("#11FF00")("\u2022")} ${import_chalk8.default.bold(rel.model.name)} -> ${import_chalk8.default.bold(rel.field.name)}`), columns);
+      const stats = `${import_chalk8.default.white("\u{1F4CA} Total relations:")} ${import_chalk8.default.white.bold(total)}`;
       return response.result((0, import_boxen3.default)(`${stats}
 
 ${formattedModels}`, {
@@ -2468,7 +2481,7 @@ ${formattedModels}`, {
 });
 
 // src/modules/prehandlers/render-handlers/get-enums.ts
-var import_prisma_ast7, import_boxen4, import_prismalux3, import_chalk8, highlightPrismaSchema2, getEnums;
+var import_prisma_ast7, import_boxen4, import_prismalux3, import_chalk9, highlightPrismaSchema2, getEnums;
 var init_get_enums = __esm({
   "src/modules/prehandlers/render-handlers/get-enums.ts"() {
     import_prisma_ast7 = require("@mrleebo/prisma-ast");
@@ -2476,7 +2489,7 @@ var init_get_enums = __esm({
     init_schema_helper();
     import_boxen4 = __toESM(require("boxen"), 1);
     import_prismalux3 = require("prismalux");
-    import_chalk8 = __toESM(require("chalk"), 1);
+    import_chalk9 = __toESM(require("chalk"), 1);
     highlightPrismaSchema2 = new import_prismalux3.PrismaHighlighter();
     getEnums = (prismaState, data) => {
       const response = handlerResponse(data);
@@ -2488,10 +2501,10 @@ var init_get_enums = __esm({
         enums = enums.filter((e) => onlyEnums.includes(e.name));
       }
       if (!enums.length) {
-        return response.result(import_chalk8.default.yellow(`\u26A0 No enums found`));
+        return response.result(import_chalk9.default.yellow(`\u26A0 No enums found`));
       }
       const totalEnums = enums.length;
-      const statistic = `\u{1F4CC} Enums in schema: ${import_chalk8.default.bold(totalEnums)}`;
+      const statistic = `\u{1F4CC} Enums in schema: ${import_chalk9.default.bold(totalEnums)}`;
       if (options?.raw) {
         const schema = {
           type: "schema",
@@ -2511,8 +2524,8 @@ ${rawOutput}`, {
       const list = [];
       enums.forEach((e) => {
         list.push({
-          name: import_chalk8.default.white.bold(e.name),
-          options: e.enumerators?.filter((e2) => e2.type == "enumerator").map((en) => import_chalk8.default.green(en?.name)) || []
+          name: import_chalk9.default.white.bold(e.name),
+          options: e.enumerators?.filter((e2) => e2.type == "enumerator").map((en) => import_chalk9.default.green(en?.name)) || []
         });
       });
       const renderedList = list.map((e) => {
@@ -2532,13 +2545,13 @@ ${renderedList.join("\n")}`, {
 });
 
 // src/modules/prehandlers/render-handlers/get-fields.ts
-var import_boxen5, import_chalk9, import_cli_table3, getFields;
+var import_boxen5, import_chalk10, import_cli_table3, getFields;
 var init_get_fields = __esm({
   "src/modules/prehandlers/render-handlers/get-fields.ts"() {
     init_handler_registry();
     init_schema_helper();
     import_boxen5 = __toESM(require("boxen"), 1);
-    import_chalk9 = __toESM(require("chalk"), 1);
+    import_chalk10 = __toESM(require("chalk"), 1);
     import_cli_table3 = __toESM(require("cli-table3"), 1);
     getFields = (prismaState, data) => {
       const response = handlerResponse(data);
@@ -2554,24 +2567,24 @@ var init_get_fields = __esm({
       }
       let fields = helper.getFields(modelName);
       if (!fields.length) {
-        return response.result(import_chalk9.default.yellow(`\u26A0 No fields found in model ${modelName}`));
+        return response.result(import_chalk10.default.yellow(`\u26A0 No fields found in model ${modelName}`));
       }
       const onlyFilters = args?.fields || [];
       if (onlyFilters.length && !onlyFilters.includes("*")) {
         fields = fields.filter((field) => onlyFilters.includes(field.name));
       }
       if (!fields.length) {
-        return response.result(import_chalk9.default.yellow(`\u26A0 No fields found in model ${modelName} that match filters`));
+        return response.result(import_chalk10.default.yellow(`\u26A0 No fields found in model ${modelName} that match filters`));
       }
       const idField = fields.find((f) => f.attributes?.some((attr) => attr.name === "id"))?.name;
       const table = new import_cli_table3.default({
         head: [
-          import_chalk9.default.bold("Field Name"),
-          import_chalk9.default.bold("Type"),
-          import_chalk9.default.bold("Required"),
-          import_chalk9.default.bold("Array"),
-          import_chalk9.default.bold("Relation"),
-          import_chalk9.default.bold("Attributes")
+          import_chalk10.default.bold("Field Name"),
+          import_chalk10.default.bold("Type"),
+          import_chalk10.default.bold("Required"),
+          import_chalk10.default.bold("Array"),
+          import_chalk10.default.bold("Relation"),
+          import_chalk10.default.bold("Attributes")
         ],
         colWidths: [20, 15, 10, 10, 25, 25],
         style: { head: ["cyan"] }
@@ -2579,12 +2592,12 @@ var init_get_fields = __esm({
       const { relations } = prismaState;
       let relationFields = 0;
       fields.forEach((field) => {
-        let name = import_chalk9.default.greenBright(field.name);
-        const type = import_chalk9.default.blueBright(field.fieldType);
-        const required = field.optional ? import_chalk9.default.redBright("No") : import_chalk9.default.greenBright("Yes");
-        const array = field.array ? import_chalk9.default.yellowBright("Yes") : import_chalk9.default.gray("No");
+        let name = import_chalk10.default.greenBright(field.name);
+        const type = import_chalk10.default.blueBright(field.fieldType);
+        const required = field.optional ? import_chalk10.default.redBright("No") : import_chalk10.default.greenBright("Yes");
+        const array = field.array ? import_chalk10.default.yellowBright("Yes") : import_chalk10.default.gray("No");
         let hasRelation = field.attributes?.some((attr) => attr.name === "relation");
-        let relation = hasRelation ? import_chalk9.default.magentaBright("Yes") : import_chalk9.default.gray("No");
+        let relation = hasRelation ? import_chalk10.default.magentaBright("Yes") : import_chalk10.default.gray("No");
         const attrs = ["unique", "id", "default"];
         const attributes = field.attributes?.filter(
           (attr) => attrs.includes(attr.name)
@@ -2599,15 +2612,15 @@ var init_get_fields = __esm({
             }
           }
           return `@${attr.name}`;
-        }).join(", ") || import_chalk9.default.gray("None");
+        }).join(", ") || import_chalk10.default.gray("None");
         for (const rel of relations) {
           if (rel.modelName === model.name) {
             if (rel.fieldName === field.name) {
-              relation = import_chalk9.default.magentaBright(rel.relationName);
+              relation = import_chalk10.default.magentaBright(rel.relationName);
               hasRelation = true;
             }
             if (rel.foreignKey === field.name) {
-              relation = import_chalk9.default.magenta(`${rel.relationName} (FK)`);
+              relation = import_chalk10.default.magenta(`${rel.relationName} (FK)`);
             }
           }
         }
@@ -2615,15 +2628,15 @@ var init_get_fields = __esm({
           relationFields++;
         }
         if (field.name == idField) {
-          name = `${import_chalk9.default.bgGreenBright.black(field.name)} (ID)`;
+          name = `${import_chalk10.default.bgGreenBright.black(field.name)} (ID)`;
         }
         table.push([name, type, required, array, relation, attributes]);
       });
       const totalFoundFields = fields.length;
       const statistic = `
-    \u{1F4CC}Fields in model: ${import_chalk9.default.bold(modelName)}
-    Total fields found: ${import_chalk9.default.bold(totalFoundFields)}
-    Fields with relations: ${import_chalk9.default.bold(relationFields)}
+    \u{1F4CC}Fields in model: ${import_chalk10.default.bold(modelName)}
+    Total fields found: ${import_chalk10.default.bold(totalFoundFields)}
+    Fields with relations: ${import_chalk10.default.bold(relationFields)}
     `;
       return response.result((0, import_boxen5.default)(`${statistic}
 ${table.toString()}`, {
@@ -2637,10 +2650,10 @@ ${table.toString()}`, {
 });
 
 // src/modules/prehandlers/render-handlers/get-model.ts
-var import_chalk10, import_prisma_ast8, import_prismalux4, import_boxen6, highlightPrismaSchema3, getModel;
+var import_chalk11, import_prisma_ast8, import_prismalux4, import_boxen6, highlightPrismaSchema3, getModel;
 var init_get_model = __esm({
   "src/modules/prehandlers/render-handlers/get-model.ts"() {
-    import_chalk10 = __toESM(require("chalk"), 1);
+    import_chalk11 = __toESM(require("chalk"), 1);
     init_handler_registry();
     import_prisma_ast8 = require("@mrleebo/prisma-ast");
     init_schema_helper();
@@ -2667,23 +2680,23 @@ var init_get_model = __esm({
         list: [model]
       };
       const hSchema = highlightPrismaSchema3.highlight((0, import_prisma_ast8.printSchema)(schema));
-      let output = `${import_chalk10.default.bold.whiteBright("Model:")} ${import_chalk10.default.greenBright(model.name)}
+      let output = `${import_chalk11.default.bold.whiteBright("Model:")} ${import_chalk11.default.greenBright(model.name)}
 `;
-      output += `${import_chalk10.default.whiteBright("Relations:")} ${totalRelations > 0 ? `${import_chalk10.default.greenBright(totalRelations)} relations` : import_chalk10.default.redBright("No relations")}
+      output += `${import_chalk11.default.whiteBright("Relations:")} ${totalRelations > 0 ? `${import_chalk11.default.greenBright(totalRelations)} relations` : import_chalk11.default.redBright("No relations")}
 
 `;
       const maxFieldLength = Math.max(...fields.map((f) => f.name.length), 5);
       const maxTypeLength = Math.max(...fields.map((f) => f.type.length), 4);
-      output += import_chalk10.default.underline("Unique Fields:\n");
+      output += import_chalk11.default.underline("Unique Fields:\n");
       output += fields.map((field) => {
-        const fieldName = field.isId ? import_chalk10.default.bold.red(field.name) : field.isUnique ? import_chalk10.default.bold.yellow(field.name) : import_chalk10.default.white(field.name);
-        const fieldType = field.isRelation ? import_chalk10.default.cyan(field.type) : import_chalk10.default.blueBright(field.type);
+        const fieldName = field.isId ? import_chalk11.default.bold.red(field.name) : field.isUnique ? import_chalk11.default.bold.yellow(field.name) : import_chalk11.default.white(field.name);
+        const fieldType = field.isRelation ? import_chalk11.default.cyan(field.type) : import_chalk11.default.blueBright(field.type);
         return `${fieldName.padEnd(maxFieldLength + 2)} ${fieldType.padEnd(
           maxTypeLength + 2
         )}`;
       }).join("\n");
       output += "\n\n";
-      output += import_chalk10.default.underline("Schema:") + hSchema;
+      output += import_chalk11.default.underline("Schema:") + hSchema;
       return response.result((0, import_boxen6.default)(output, {
         padding: 1,
         borderColor: "cyan",
@@ -2694,7 +2707,7 @@ var init_get_model = __esm({
 });
 
 // src/modules/prehandlers/render-handlers/get-models.ts
-var import_prisma_ast9, import_boxen7, import_prismalux5, import_chalk11, highlightPrismaSchema4, getModels;
+var import_prisma_ast9, import_boxen7, import_prismalux5, import_chalk12, highlightPrismaSchema4, getModels;
 var init_get_models = __esm({
   "src/modules/prehandlers/render-handlers/get-models.ts"() {
     import_prisma_ast9 = require("@mrleebo/prisma-ast");
@@ -2702,7 +2715,7 @@ var init_get_models = __esm({
     init_schema_helper();
     import_boxen7 = __toESM(require("boxen"), 1);
     import_prismalux5 = require("prismalux");
-    import_chalk11 = __toESM(require("chalk"), 1);
+    import_chalk12 = __toESM(require("chalk"), 1);
     highlightPrismaSchema4 = new import_prismalux5.PrismaHighlighter();
     getModels = (prismaState, data) => {
       const response = handlerResponse(data);
@@ -2713,7 +2726,7 @@ var init_get_models = __esm({
         list: models
       };
       const modelCount = models.length;
-      const title = modelCount > 0 ? `\u{1F4CA} Query Result: ${import_chalk11.default.bold(modelCount)} model${modelCount > 1 ? "s" : ""} found:` : `\u274C No models found`;
+      const title = modelCount > 0 ? `\u{1F4CA} Query Result: ${import_chalk12.default.bold(modelCount)} model${modelCount > 1 ? "s" : ""} found:` : `\u274C No models found`;
       const highlightedSchema = highlightPrismaSchema4.highlight((0, import_prisma_ast9.printSchema)(schema));
       const output = models?.length ? `
 ${title}
@@ -2763,14 +2776,14 @@ var init_get_relations = __esm({
 });
 
 // src/modules/prehandlers/render-handlers/get-generators.ts
-var import_cli_table32, import_boxen8, import_chalk12, getGenerators;
+var import_cli_table32, import_boxen8, import_chalk13, getGenerators;
 var init_get_generators = __esm({
   "src/modules/prehandlers/render-handlers/get-generators.ts"() {
     init_handler_registry();
     init_schema_helper();
     import_cli_table32 = __toESM(require("cli-table3"), 1);
     import_boxen8 = __toESM(require("boxen"), 1);
-    import_chalk12 = __toESM(require("chalk"), 1);
+    import_chalk13 = __toESM(require("chalk"), 1);
     getGenerators = (prismaState, data) => {
       const response = handlerResponse(data);
       const helper = useHelper(prismaState);
@@ -2792,7 +2805,7 @@ var init_get_generators = __esm({
         });
       });
       const result = sections.map((section) => {
-        return (0, import_boxen8.default)(import_chalk12.default.bold(section.name) + "\n" + section.table, { padding: 1, borderStyle: "bold" });
+        return (0, import_boxen8.default)(import_chalk13.default.bold(section.name) + "\n" + section.table, { padding: 1, borderStyle: "bold" });
       }).join("\n");
       return response.result(
         `
@@ -2808,11 +2821,11 @@ ${result}
 function normalizeQuotes3(input) {
   return input.replace(/^[\'"]+/, "").replace(/[\'"]+$/, "");
 }
-var import_boxen9, import_chalk13, getDB;
+var import_boxen9, import_chalk14, getDB;
 var init_get_db = __esm({
   "src/modules/prehandlers/render-handlers/get-db.ts"() {
     import_boxen9 = __toESM(require("boxen"), 1);
-    import_chalk13 = __toESM(require("chalk"), 1);
+    import_chalk14 = __toESM(require("chalk"), 1);
     init_handler_registry();
     getDB = (prismaState, data) => {
       const response = handlerResponse(data);
@@ -2828,8 +2841,8 @@ var init_get_db = __esm({
       if (typeof prevUrl == "object" && prevUrl.name == "env") {
         prevUrl = "env(" + normalizeQuotes3(prevUrl.params[0]) + ")";
       }
-      return response.result((0, import_boxen9.default)(`${import_chalk13.default.gray("Provider")}: ${provider}
-${import_chalk13.default.gray("URL")}: ${prevUrl}`, { padding: 1, textAlignment: "left", margin: 1, borderStyle: "double" }));
+      return response.result((0, import_boxen9.default)(`${import_chalk14.default.gray("Provider")}: ${provider}
+${import_chalk14.default.gray("URL")}: ${prevUrl}`, { padding: 1, textAlignment: "left", margin: 1, borderStyle: "double" }));
     };
   }
 });

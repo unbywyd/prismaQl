@@ -7,15 +7,15 @@
 
 ## Introduction
 
-**PrismaQL Core** provides a **powerful SQL-like DSL** for safely and programmatically **editing Prisma schema files**. It allows you to manage **models**, **fields**, **relations**, and **enums** while preserving schema integrity via **AST-based validation**, **commit tracking**, and **backup mechanisms**.
+**PrismaQL Core** provides a **powerful SQL-like DSL** for safely and programmatically **editing Prisma schema files**. It allows you to manage **models**, **fields**, **relations**, **enums**, **database connections**, and **generators** while preserving schema integrity via **AST-based validation**, **change tracking**, and **backup mechanisms**. This ensures a flexible and robust development workflow.
 
 Designed as a **standalone library** or to be used alongside the [PrismaQL CLI](https://github.com/unbywyd/prismaql-cli), PrismaQL Core offers:
 
-- **Declarative Command Syntax** – Easy-to-read commands like `GET MODELS`, `ADD FIELD`, and more.
-- **Query & Mutation Separation** – Read-only operations (`GET`, `PRINT`, `VALIDATE`) versus modifying ones (`ADD`, `DELETE`, `UPDATE`).
-- **Configurable Workflow** – Integrate your own handlers for queries and mutations.
-- **Safe & Reversible Edits** – Full validation and commit logs, plus automatic backups.
-- **Extensibility** – Register custom commands or augment existing ones.
+- **Declarative Command Syntax** – Intuitive and human-readable commands like `GET MODELS`, `ADD FIELD`, and more.
+- **Query & Mutation Separation** – Clear distinction between read-only operations (`GET`, `PRINT`, `VALIDATE`) and modifying ones (`ADD`, `DELETE`, `UPDATE`).
+- **Configurable Workflow** – Easily extend and integrate custom handlers for queries and mutations.
+- **Safe & Reversible Edits** – Built-in validation with automatic backups to ensure data integrity.
+- **Flexible Relation Management** – Supports **1:1, 1:M, and M:N** relationships, including **pivot table-based relations**. Allows both **direct** and **indirect** (foreign-key-only) associations, with the ability to choose the **FK holder side** for precise schema control.
 
 > **Note:** PrismaQL is alpha-stage software. APIs may evolve, and advanced features are still in development.
 
@@ -24,15 +24,16 @@ Designed as a **standalone library** or to be used alongside the [PrismaQL CLI](
 ## How It Works
 
 1. **Parsing DSL** – Raw text commands (e.g. `GET MODEL User;`) go through the **PrismaQlDslParser**, producing a structured object.
-2. **Validation & Execution** – Queries simply inspect the schema; mutations modify it, ensuring AST-level integrity.
-3. **Backup & Commit** – Each mutation can undergo a dry run, then commit changes. Old versions are stored in `.prisma/backups`.
-4. **Extensible Handlers** – You can register **query** or **mutation** handlers to shape how commands are processed.
+2. **Chained Commands** – You can chain multiple commands in a single line, separated by semicolons, and they will be executed sequentially.
+3. **Validation & Execution** – Queries simply inspect the schema; mutations modify it, ensuring AST-level integrity.
+4. **Backup & Save** – Each mutation can undergo a dry run, then save changes. Old versions are stored in `.prisma/backups`.
+5. **Extensible Handlers** – You can register **query** or **mutation** handlers to shape how commands are processed.
 
 ---
 
 ## Supported Commands
 
- [PrismaQL CLI](https://github.com/unbywyd/prismaql-cli) supports the same **Query** and **Mutation** commands as the core library:
+[PrismaQL CLI](https://github.com/unbywyd/prismaql-cli) supports the same **Query** and **Mutation** commands as the core library:
 
 ### 1. Query Commands
 
@@ -71,9 +72,6 @@ Designed as a **standalone library** or to be used alongside the [PrismaQL CLI](
 ![Prismalux Syntax Highlighting](https://raw.githubusercontent.com/unbywyd/prismaql/master/assets/1.png)
 ![Prismalux Syntax Highlighting](https://raw.githubusercontent.com/unbywyd/prismaql/master/assets/2.png)
 
-
-
-
 ## Flow of Execution
 
 1. **Parse Command** – `PrismaQlDslParser` converts your raw command string into a structured `PrismaQLParsedDSL` object.
@@ -82,8 +80,8 @@ Designed as a **standalone library** or to be used alongside the [PrismaQL CLI](
    provider.apply(parsedCommand);
    ```
 3. **Handlers** – The provider dispatches the command to the correct handler (`QueryHandler` or `MutationHandler`) based on `type`.
-4. **Validation & Dry Run** – Each mutation can be tested in a `dryRun` mode before final commit.
-5. **Commit & Backup** – If the command is valid, changes are saved, and the old schema is backed up under `.prisma/backups`.
+4. **Validation & Dry Run** – Each mutation can be tested in a `dryRun` mode before final merge.
+5. **Backup** – If the command is valid, the old schema is backed up under `.prisma/backups`.
 6. **Rebase** – The schema loader can rebase the in-memory state to reflect the final updated schema.
 
 ---
@@ -210,14 +208,16 @@ provider.apply(parsedCommand);
 Check out the [PrismaQL CLI](https://github.com/unbywyd/prismaql-cli):
 
 ```sh
+# Add a new model (mutation)
+prismaql "ADD MODEL TempData ({ name String });"
 # Query schema
 prismaql "GET MODELS"
 
 # Add a field programmatically
-prismaql "ADD FIELD email TO User ({String})"
+prismaql "ADD FIELD email TO User ({String});"
 
 # Delete an entire model
-prismaql "DELETE MODEL TempData"
+prismaql "DELETE MODEL TempData;"
 ```
 
 ---

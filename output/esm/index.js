@@ -5,6 +5,7 @@ var __export = (target, all) => {
 };
 
 // src/modules/dsl.ts
+import chalk from "chalk";
 var DSL_PATTERN = /^([A-Z]+)(?:\s+([A-Z_]+))?(?:\s+([\w\s,*]+))?(?:\s*\(\{([\s\S]*?)\}\))?(?:\s*\(([^)]*?)\))?$/i;
 var ACTION_COMMAND_MAP = {
   GET: ["MODELS", "DB", "GENERATORS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
@@ -43,6 +44,18 @@ var PrismaQlDslParser = class {
   parseCommand(input) {
     const trimmed = input.trim();
     if (!trimmed.endsWith(";")) {
+      const errorMessage = `
+${chalk.red("Syntax Error: Missing semicolon (;) at the end of the command.")}
+
+${chalk.yellow("Each DSL command must end with a semicolon.")} 
+For example:
+
+    ${chalk.green("GET MODELS;")}
+    ${chalk.green("DELETE MODEL Product;")}
+
+Please check your input and try again.
+`;
+      console.error(errorMessage);
       throw new Error("DSL command must end with a semicolon.");
     }
     const raw = trimmed.slice(0, -1).trim();
@@ -309,7 +322,7 @@ var loadPrismaSchema = async (inputPath) => {
 // src/modules/prisma-schema-loader.ts
 import pkg2 from "@prisma/internals";
 import { PrismaHighlighter } from "prismalux";
-import chalk from "chalk";
+import chalk2 from "chalk";
 var { getDMMF: getDMMF2 } = pkg2;
 var HighlightPrismaSchema = new PrismaHighlighter();
 var PrismaQlSchemaLoader = class {
@@ -391,7 +404,7 @@ var PrismaQlSchemaLoader = class {
     for (let i = 0; i < messages.length; i++) {
       const message = messages[i];
       const commitNumber = i + 1;
-      console.log(chalk.grey(`Commit ${commitNumber}:`), chalk.cyanBright(message));
+      console.log(chalk2.grey(`Commit ${commitNumber}:`), chalk2.cyanBright(message));
     }
     let outputPath = sourcePath;
     if (sourcePath && !path2.isAbsolute(sourcePath)) {
@@ -417,8 +430,8 @@ var PrismaQlSchemaLoader = class {
     }
     const updatedsourcePrismaSchema = this.prismaState.builder.print({ sort: true });
     fs2.writeFileSync(finalPath, updatedsourcePrismaSchema, "utf-8");
-    console.log(chalk.greenBright(`\u2705 Schema saved successfully to ${finalPath}`));
-    console.log(chalk.grey(`\u{1F4C5} Timestamp: ${(/* @__PURE__ */ new Date()).toLocaleString()}`));
+    console.log(chalk2.greenBright(`\u2705 Schema saved successfully to ${finalPath}`));
+    console.log(chalk2.grey(`\u{1F4C5} Timestamp: ${(/* @__PURE__ */ new Date()).toLocaleString()}`));
   }
   print() {
     if (!this.prismaState) {
@@ -823,7 +836,7 @@ var getManyToManyModelName = (modelA, modelB, relationName) => {
 
 // src/modules/field-relation-logger.ts
 import treeify from "treeify";
-import chalk2 from "chalk";
+import chalk3 from "chalk";
 import boxen from "boxen";
 import pkg4 from "@prisma/internals";
 import fs3 from "fs";
@@ -890,24 +903,24 @@ var PrismaQlFieldRelationLogger = class {
       const name = relation.fieldName || relation.modelName;
       const relationAlias = `(as ${relation.fieldName || relation.relationName})`;
       const isSelfRelation = relation.modelName === relation.relatedModel;
-      const selfRelationIcon = isSelfRelation ? chalk2.yellow("\u{1F501}") : "";
-      let keyInfo = chalk2.gray("[-]");
+      const selfRelationIcon = isSelfRelation ? chalk3.yellow("\u{1F501}") : "";
+      let keyInfo = chalk3.gray("[-]");
       if (relation.foreignKey) {
         const direction = relation.relationDirection === "backward" ? "\u2190" : "\u2192";
-        keyInfo = `[FK: ${chalk2.blue(relation.foreignKey)} ${direction} ${chalk2.green(relation.referenceKey || "id")}]`;
+        keyInfo = `[FK: ${chalk3.blue(relation.foreignKey)} ${direction} ${chalk3.green(relation.referenceKey || "id")}]`;
       } else if (relation.relationTable) {
-        keyInfo = `[M:N via ${chalk2.yellow(relation.relationTable)}]`;
+        keyInfo = `[M:N via ${chalk3.yellow(relation.relationTable)}]`;
       }
       if (relation.relationTable && relation.relationTable !== relation.modelName) {
         if (!table[relation.relationTable]) {
           table[relation.relationTable] = {};
         }
-        table[relation.relationTable][`\u2192 ${chalk2.yellow(relation.modelName)}:${chalk2.cyan(relation.fieldName)} [FK: ${chalk2.blue(relation.foreignKey || "?")} \u2192 ${chalk2.green(relation.referenceKey || "?")}]`] = {};
-        table[relation.relationTable][`\u2192 ${chalk2.yellow(relation.relatedModel)}:${chalk2.cyan(relation.inverseField)} [FK: ${chalk2.blue(relation.foreignKey || "?")} \u2192 ${chalk2.green(relation.referenceKey || "?")}]`] = {};
+        table[relation.relationTable][`\u2192 ${chalk3.yellow(relation.modelName)}:${chalk3.cyan(relation.fieldName)} [FK: ${chalk3.blue(relation.foreignKey || "?")} \u2192 ${chalk3.green(relation.referenceKey || "?")}]`] = {};
+        table[relation.relationTable][`\u2192 ${chalk3.yellow(relation.relatedModel)}:${chalk3.cyan(relation.inverseField)} [FK: ${chalk3.blue(relation.foreignKey || "?")} \u2192 ${chalk3.green(relation.referenceKey || "?")}]`] = {};
       }
-      const constraints = relation?.constraints?.length ? `Constraints: ${chalk2.magenta(relation.constraints.join(", "))}` : "";
+      const constraints = relation?.constraints?.length ? `Constraints: ${chalk3.magenta(relation.constraints.join(", "))}` : "";
       const isList = (relationType === "1:M" || relationType === "M:N") && !relation?.foreignKey;
-      let relationLabel = `\u2192 ${chalk2.yellow(relation.relatedModel + (isList ? "[]" : ""))}:${chalk2.cyan(name)} ${relationAlias} ${chalk2.red(relationType)} ${keyInfo} ${constraints} ${selfRelationIcon}`;
+      let relationLabel = `\u2192 ${chalk3.yellow(relation.relatedModel + (isList ? "[]" : ""))}:${chalk3.cyan(name)} ${relationAlias} ${chalk3.red(relationType)} ${keyInfo} ${constraints} ${selfRelationIcon}`;
       if (!table[relationLabel]) {
         table[relationLabel] = {};
       }
@@ -915,7 +928,7 @@ var PrismaQlFieldRelationLogger = class {
       models.add(relation.relatedModel);
       relationsSet.add(`${rootModel} -> ${relation.relatedModel}`);
     }
-    trees.push({ [chalk2.bold(rootModel)]: table });
+    trees.push({ [chalk3.bold(rootModel)]: table });
     for (const relation of modelRelations) {
       const subTree = this.buildModelTrees(relation.relatedModel, relations, maxDepth, depth + 1, visitedModels);
       trees = trees.concat(subTree.trees);
@@ -983,17 +996,17 @@ var PrismaQlFieldRelationLogger = class {
     }
     const { models, relations: rels, trees } = this.buildModelTrees(rootModel, this.relations, maxDepth);
     const stats = this.collectRelationStatistics(models, rels, rootModel, maxDepth);
-    let output = `${chalk2.green.bold("\u{1F4CA} Relation Tree Statistics")}
+    let output = `${chalk3.green.bold("\u{1F4CA} Relation Tree Statistics")}
 `;
-    output += `${chalk2.yellow("Model:")} ${chalk2.bold(rootModel)}
+    output += `${chalk3.yellow("Model:")} ${chalk3.bold(rootModel)}
 `;
-    output += `${chalk2.cyan("Max Depth:")} ${chalk2.bold(maxDepth)}
+    output += `${chalk3.cyan("Max Depth:")} ${chalk3.bold(maxDepth)}
 `;
-    output += `${chalk2.blue("Related Models:")} ${chalk2.bold(stats.uniqueModels)}
+    output += `${chalk3.blue("Related Models:")} ${chalk3.bold(stats.uniqueModels)}
 `;
-    output += `${chalk2.magenta("Total Relations:")} ${chalk2.bold(stats.totalRelations)}
+    output += `${chalk3.magenta("Total Relations:")} ${chalk3.bold(stats.totalRelations)}
 `;
-    output += `${chalk2.redBright("Direct Relations:")} ${chalk2.bold(stats.directRelations)}
+    output += `${chalk3.redBright("Direct Relations:")} ${chalk3.bold(stats.directRelations)}
 `;
     let treeOutput = "";
     for (const tree of trees) {
@@ -1001,8 +1014,8 @@ var PrismaQlFieldRelationLogger = class {
     }
     const results = [...rels.values()].filter((el) => {
       return el.startsWith(rootModel) || el.endsWith(rootModel);
-    }).map((r) => chalk2.gray(r)).join("\n");
-    const relsList = `${chalk2.white.bold("\u{1F517} Direct Relations")}
+    }).map((r) => chalk3.gray(r)).join("\n");
+    const relsList = `${chalk3.white.bold("\u{1F517} Direct Relations")}
 ${results}`;
     return boxen(output.trim() + "\n" + treeOutput.trim() + `
 
@@ -1036,7 +1049,7 @@ var getRelationStatistics = (relations, modelName, maxDepth = 1) => {
 };
 
 // src/modules/prisma-ql-provider.ts
-import chalk3 from "chalk";
+import chalk4 from "chalk";
 
 // src/modules/handler-registries/handler-registry.ts
 var handlerResponse = (dsl) => {
@@ -1095,7 +1108,7 @@ var PrismaQlProvider = class {
         }
         responses.push(result);
       } catch (e) {
-        console.log(chalk3.red(`Error processing command: ${e.message}`));
+        console.log(chalk4.red(`Error processing command: ${e.message}`));
         throw e;
       }
     }
@@ -1160,7 +1173,7 @@ var PrismaQlProvider = class {
           throw result.error;
         }
       }
-      console.log("\u2705", chalk3.gray(displayCommand), chalk3.green(`Dry run success!`));
+      console.log("\u2705", chalk4.gray(displayCommand), chalk4.green(`Dry run success!`));
     } catch (e) {
       throw new Error(`Modification failed: ${e.message}`);
     }
@@ -1169,7 +1182,7 @@ var PrismaQlProvider = class {
     if (validation instanceof Error) {
       throw new Error(`Modification failed: ${validation.message}`);
     }
-    console.log("\u2705", chalk3.gray(displayCommand), chalk3.green(`Validation success!`));
+    console.log("\u2705", chalk4.gray(displayCommand), chalk4.green(`Validation success!`));
     return updatedSchema;
   }
   async mutation(input, options = {}) {
@@ -1196,7 +1209,7 @@ var PrismaQlProvider = class {
       this.mutationHandler.execute(parsedCommand.action, parsedCommand.command, state, parsedCommand);
       this.mutationState.push(parsedCommand);
       const displayCommand = `${parsedCommand.action} ${parsedCommand.command} > `;
-      console.log("\u2705", chalk3.white(displayCommand), chalk3.green("Mutation success"));
+      console.log("\u2705", chalk4.white(displayCommand), chalk4.green("Mutation success"));
     } catch (e) {
       throw new Error(`Modification failed: ${e.message}`);
     }
@@ -1374,11 +1387,11 @@ __export(render_handlers_exports, {
 });
 
 // src/modules/prehandlers/render-handlers/get-enum-relations.ts
-import chalk5 from "chalk";
+import chalk6 from "chalk";
 import boxen3 from "boxen";
 
 // src/modules/prehandlers/render-handlers/get-model-names.ts
-import chalk4 from "chalk";
+import chalk5 from "chalk";
 import boxen2 from "boxen";
 var formatColumns = (items, columns = 2) => {
   const columnWidth = Math.max(...items.map((name) => name.length)) + 2;
@@ -1403,13 +1416,13 @@ var getModelNames = (prismaState, data) => {
   const response = handlerResponse(data);
   const models = useHelper(prismaState).getModels();
   if (models.length === 0) {
-    return response.result(chalk4.red.bold("\u274C No models in Prisma schema."));
+    return response.result(chalk5.red.bold("\u274C No models in Prisma schema."));
   }
   const modelNames = models.map((model) => model.name);
   sortModelNames(modelNames);
   const columns = modelNames.length > 6 ? 3 : 2;
-  const stats = `${chalk4.white("\u{1F4CA} Total models:")} ${chalk4.white.bold(modelNames.length)}`;
-  const formattedModels = formatColumns(modelNames.map((name) => `${chalk4.hex("#11FF00")("\u2022")} ${chalk4.bold(name)}`), columns);
+  const stats = `${chalk5.white("\u{1F4CA} Total models:")} ${chalk5.white.bold(modelNames.length)}`;
+  const formattedModels = formatColumns(modelNames.map((name) => `${chalk5.hex("#11FF00")("\u2022")} ${chalk5.bold(name)}`), columns);
   return response.result(boxen2(`${stats}
 
 ${formattedModels}`, {
@@ -1441,8 +1454,8 @@ var getEnumRelations = (prismaState, data) => {
     return response.result(`Enum ${enumName} has no relations`);
   }
   const columns = relations.length > 6 ? 3 : 2;
-  const formattedModels = formatColumns(relations.map((rel) => `${chalk5.hex("#11FF00")("\u2022")} ${chalk5.bold(rel.model.name)} -> ${chalk5.bold(rel.field.name)}`), columns);
-  const stats = `${chalk5.white("\u{1F4CA} Total relations:")} ${chalk5.white.bold(total)}`;
+  const formattedModels = formatColumns(relations.map((rel) => `${chalk6.hex("#11FF00")("\u2022")} ${chalk6.bold(rel.model.name)} -> ${chalk6.bold(rel.field.name)}`), columns);
+  const stats = `${chalk6.white("\u{1F4CA} Total relations:")} ${chalk6.white.bold(total)}`;
   return response.result(boxen3(`${stats}
 
 ${formattedModels}`, {
@@ -1457,7 +1470,7 @@ ${formattedModels}`, {
 import { printSchema } from "@mrleebo/prisma-ast";
 import boxen4 from "boxen";
 import { PrismaHighlighter as PrismaHighlighter3 } from "prismalux";
-import chalk6 from "chalk";
+import chalk7 from "chalk";
 var highlightPrismaSchema2 = new PrismaHighlighter3();
 var getEnums = (prismaState, data) => {
   const response = handlerResponse(data);
@@ -1469,10 +1482,10 @@ var getEnums = (prismaState, data) => {
     enums = enums.filter((e) => onlyEnums.includes(e.name));
   }
   if (!enums.length) {
-    return response.result(chalk6.yellow(`\u26A0 No enums found`));
+    return response.result(chalk7.yellow(`\u26A0 No enums found`));
   }
   const totalEnums = enums.length;
-  const statistic = `\u{1F4CC} Enums in schema: ${chalk6.bold(totalEnums)}`;
+  const statistic = `\u{1F4CC} Enums in schema: ${chalk7.bold(totalEnums)}`;
   if (options?.raw) {
     const schema = {
       type: "schema",
@@ -1492,8 +1505,8 @@ ${rawOutput}`, {
   const list = [];
   enums.forEach((e) => {
     list.push({
-      name: chalk6.white.bold(e.name),
-      options: e.enumerators?.filter((e2) => e2.type == "enumerator").map((en) => chalk6.green(en?.name)) || []
+      name: chalk7.white.bold(e.name),
+      options: e.enumerators?.filter((e2) => e2.type == "enumerator").map((en) => chalk7.green(en?.name)) || []
     });
   });
   const renderedList = list.map((e) => {
@@ -1512,7 +1525,7 @@ ${renderedList.join("\n")}`, {
 
 // src/modules/prehandlers/render-handlers/get-fields.ts
 import boxen5 from "boxen";
-import chalk7 from "chalk";
+import chalk8 from "chalk";
 import Table from "cli-table3";
 var getFields = (prismaState, data) => {
   const response = handlerResponse(data);
@@ -1528,24 +1541,24 @@ var getFields = (prismaState, data) => {
   }
   let fields = helper.getFields(modelName);
   if (!fields.length) {
-    return response.result(chalk7.yellow(`\u26A0 No fields found in model ${modelName}`));
+    return response.result(chalk8.yellow(`\u26A0 No fields found in model ${modelName}`));
   }
   const onlyFilters = args?.fields || [];
   if (onlyFilters.length && !onlyFilters.includes("*")) {
     fields = fields.filter((field) => onlyFilters.includes(field.name));
   }
   if (!fields.length) {
-    return response.result(chalk7.yellow(`\u26A0 No fields found in model ${modelName} that match filters`));
+    return response.result(chalk8.yellow(`\u26A0 No fields found in model ${modelName} that match filters`));
   }
   const idField = fields.find((f) => f.attributes?.some((attr) => attr.name === "id"))?.name;
   const table = new Table({
     head: [
-      chalk7.bold("Field Name"),
-      chalk7.bold("Type"),
-      chalk7.bold("Required"),
-      chalk7.bold("Array"),
-      chalk7.bold("Relation"),
-      chalk7.bold("Attributes")
+      chalk8.bold("Field Name"),
+      chalk8.bold("Type"),
+      chalk8.bold("Required"),
+      chalk8.bold("Array"),
+      chalk8.bold("Relation"),
+      chalk8.bold("Attributes")
     ],
     colWidths: [20, 15, 10, 10, 25, 25],
     style: { head: ["cyan"] }
@@ -1553,12 +1566,12 @@ var getFields = (prismaState, data) => {
   const { relations } = prismaState;
   let relationFields = 0;
   fields.forEach((field) => {
-    let name = chalk7.greenBright(field.name);
-    const type = chalk7.blueBright(field.fieldType);
-    const required = field.optional ? chalk7.redBright("No") : chalk7.greenBright("Yes");
-    const array = field.array ? chalk7.yellowBright("Yes") : chalk7.gray("No");
+    let name = chalk8.greenBright(field.name);
+    const type = chalk8.blueBright(field.fieldType);
+    const required = field.optional ? chalk8.redBright("No") : chalk8.greenBright("Yes");
+    const array = field.array ? chalk8.yellowBright("Yes") : chalk8.gray("No");
     let hasRelation = field.attributes?.some((attr) => attr.name === "relation");
-    let relation = hasRelation ? chalk7.magentaBright("Yes") : chalk7.gray("No");
+    let relation = hasRelation ? chalk8.magentaBright("Yes") : chalk8.gray("No");
     const attrs = ["unique", "id", "default"];
     const attributes = field.attributes?.filter(
       (attr) => attrs.includes(attr.name)
@@ -1573,15 +1586,15 @@ var getFields = (prismaState, data) => {
         }
       }
       return `@${attr.name}`;
-    }).join(", ") || chalk7.gray("None");
+    }).join(", ") || chalk8.gray("None");
     for (const rel of relations) {
       if (rel.modelName === model.name) {
         if (rel.fieldName === field.name) {
-          relation = chalk7.magentaBright(rel.relationName);
+          relation = chalk8.magentaBright(rel.relationName);
           hasRelation = true;
         }
         if (rel.foreignKey === field.name) {
-          relation = chalk7.magenta(`${rel.relationName} (FK)`);
+          relation = chalk8.magenta(`${rel.relationName} (FK)`);
         }
       }
     }
@@ -1589,15 +1602,15 @@ var getFields = (prismaState, data) => {
       relationFields++;
     }
     if (field.name == idField) {
-      name = `${chalk7.bgGreenBright.black(field.name)} (ID)`;
+      name = `${chalk8.bgGreenBright.black(field.name)} (ID)`;
     }
     table.push([name, type, required, array, relation, attributes]);
   });
   const totalFoundFields = fields.length;
   const statistic = `
-    \u{1F4CC}Fields in model: ${chalk7.bold(modelName)}
-    Total fields found: ${chalk7.bold(totalFoundFields)}
-    Fields with relations: ${chalk7.bold(relationFields)}
+    \u{1F4CC}Fields in model: ${chalk8.bold(modelName)}
+    Total fields found: ${chalk8.bold(totalFoundFields)}
+    Fields with relations: ${chalk8.bold(relationFields)}
     `;
   return response.result(boxen5(`${statistic}
 ${table.toString()}`, {
@@ -1609,7 +1622,7 @@ ${table.toString()}`, {
 };
 
 // src/modules/prehandlers/render-handlers/get-model.ts
-import chalk8 from "chalk";
+import chalk9 from "chalk";
 import { printSchema as printSchema2 } from "@mrleebo/prisma-ast";
 import { PrismaHighlighter as PrismaHighlighter4 } from "prismalux";
 import boxen6 from "boxen";
@@ -1632,23 +1645,23 @@ var getModel = (prismaState, data) => {
     list: [model]
   };
   const hSchema = highlightPrismaSchema3.highlight(printSchema2(schema));
-  let output = `${chalk8.bold.whiteBright("Model:")} ${chalk8.greenBright(model.name)}
+  let output = `${chalk9.bold.whiteBright("Model:")} ${chalk9.greenBright(model.name)}
 `;
-  output += `${chalk8.whiteBright("Relations:")} ${totalRelations > 0 ? `${chalk8.greenBright(totalRelations)} relations` : chalk8.redBright("No relations")}
+  output += `${chalk9.whiteBright("Relations:")} ${totalRelations > 0 ? `${chalk9.greenBright(totalRelations)} relations` : chalk9.redBright("No relations")}
 
 `;
   const maxFieldLength = Math.max(...fields.map((f) => f.name.length), 5);
   const maxTypeLength = Math.max(...fields.map((f) => f.type.length), 4);
-  output += chalk8.underline("Unique Fields:\n");
+  output += chalk9.underline("Unique Fields:\n");
   output += fields.map((field) => {
-    const fieldName = field.isId ? chalk8.bold.red(field.name) : field.isUnique ? chalk8.bold.yellow(field.name) : chalk8.white(field.name);
-    const fieldType = field.isRelation ? chalk8.cyan(field.type) : chalk8.blueBright(field.type);
+    const fieldName = field.isId ? chalk9.bold.red(field.name) : field.isUnique ? chalk9.bold.yellow(field.name) : chalk9.white(field.name);
+    const fieldType = field.isRelation ? chalk9.cyan(field.type) : chalk9.blueBright(field.type);
     return `${fieldName.padEnd(maxFieldLength + 2)} ${fieldType.padEnd(
       maxTypeLength + 2
     )}`;
   }).join("\n");
   output += "\n\n";
-  output += chalk8.underline("Schema:") + hSchema;
+  output += chalk9.underline("Schema:") + hSchema;
   return response.result(boxen6(output, {
     padding: 1,
     borderColor: "cyan",
@@ -1660,7 +1673,7 @@ var getModel = (prismaState, data) => {
 import { printSchema as printSchema3 } from "@mrleebo/prisma-ast";
 import boxen7 from "boxen";
 import { PrismaHighlighter as PrismaHighlighter5 } from "prismalux";
-import chalk9 from "chalk";
+import chalk10 from "chalk";
 var highlightPrismaSchema4 = new PrismaHighlighter5();
 var getModels = (prismaState, data) => {
   const response = handlerResponse(data);
@@ -1671,7 +1684,7 @@ var getModels = (prismaState, data) => {
     list: models
   };
   const modelCount = models.length;
-  const title = modelCount > 0 ? `\u{1F4CA} Query Result: ${chalk9.bold(modelCount)} model${modelCount > 1 ? "s" : ""} found:` : `\u274C No models found`;
+  const title = modelCount > 0 ? `\u{1F4CA} Query Result: ${chalk10.bold(modelCount)} model${modelCount > 1 ? "s" : ""} found:` : `\u274C No models found`;
   const highlightedSchema = highlightPrismaSchema4.highlight(printSchema3(schema));
   const output = models?.length ? `
 ${title}
@@ -2360,7 +2373,7 @@ var deleteModel = (prismaState, data) => {
 };
 
 // src/modules/prehandlers/mutation-handlers/delete-relations.ts
-import chalk10 from "chalk";
+import chalk11 from "chalk";
 var deleteRelation = (prismaState, data) => {
   const { args, options } = data;
   const response = handlerResponse(data);
@@ -2384,7 +2397,7 @@ var deleteRelation = (prismaState, data) => {
     return response.error(`Field ${fieldA} specified for ${modelA} but no field specified for ${modelB}`);
   }
   if (options?.relationName) {
-    console.log(chalk10.yellow(`Relation name is specified. Attempting to remove relation by name`));
+    console.log(chalk11.yellow(`Relation name is specified. Attempting to remove relation by name`));
     const fieldsA = modelARef.properties.filter(
       (prop) => prop.type === "field" && (prop.fieldType === modelB || prop.fieldType === modelA)
     );
@@ -2420,7 +2433,7 @@ var deleteRelation = (prismaState, data) => {
     return response.result(`Relation ${options.relationName} removed between ${modelA} and ${modelB}`);
   }
   if (!fieldA && !fieldB) {
-    console.log(chalk10.yellow(`No fields specified. Attempting to remove all relations between ${modelA} and ${modelB}`));
+    console.log(chalk11.yellow(`No fields specified. Attempting to remove all relations between ${modelA} and ${modelB}`));
     const fieldsToRemoveA = modelARef.properties.filter(
       (prop) => prop.type === "field" && prop.fieldType === modelB
     );
@@ -2588,7 +2601,7 @@ var addGenerator = (prismaState, data) => {
 };
 
 // src/modules/prehandlers/mutation-handlers/update-generator.ts
-import chalk11 from "chalk";
+import chalk12 from "chalk";
 import { getSchema as getSchema6 } from "@mrleebo/prisma-ast";
 function normalizeQuotes(input) {
   return input.replace(/^[\'"]+/, "").replace(/[\'"]+$/, "");
@@ -2611,7 +2624,7 @@ var updateGenerator = (prismaState, data) => {
     if (!prismaBlock) {
       return response.error("No generator block provided. Example: 'ADD GENERATOR GeneratorName ->[({key: value})];'");
     }
-    console.log(chalk11.yellow(`Warning: generator block provided. Generator ${generatorName} will be replaced`));
+    console.log(chalk12.yellow(`Warning: generator block provided. Generator ${generatorName} will be replaced`));
     builder.drop(prevGenerator.name);
     const sourceModel = `generator ${generatorName} {
         ${prismaBlock}
@@ -2628,9 +2641,9 @@ var updateGenerator = (prismaState, data) => {
     const generator = builder.generator(generatorName);
     const otherOptions = Object.keys(options).filter((key) => key !== "output" && key !== "provider");
     if (otherOptions.length) {
-      console.log(chalk11.yellow(`Warning: unknown options ${otherOptions.join(", ")} will be skipped`));
+      console.log(chalk12.yellow(`Warning: unknown options ${otherOptions.join(", ")} will be skipped`));
       const validOptions = ["output", "provider"];
-      console.log(chalk11.yellow(`Valid options are: ${validOptions.join(", ")}`));
+      console.log(chalk12.yellow(`Valid options are: ${validOptions.join(", ")}`));
     }
     if (options?.output) {
       generator.assignment("output", normalizeQuotes(options.output));
@@ -2692,7 +2705,7 @@ mutationsHandler.register("UPDATE", "DB", updateDB);
 // src/modules/prehandlers/render-handlers/get-generators.ts
 import Table2 from "cli-table3";
 import boxen8 from "boxen";
-import chalk12 from "chalk";
+import chalk13 from "chalk";
 var getGenerators = (prismaState, data) => {
   const response = handlerResponse(data);
   const helper = useHelper(prismaState);
@@ -2714,7 +2727,7 @@ var getGenerators = (prismaState, data) => {
     });
   });
   const result = sections.map((section) => {
-    return boxen8(chalk12.bold(section.name) + "\n" + section.table, { padding: 1, borderStyle: "bold" });
+    return boxen8(chalk13.bold(section.name) + "\n" + section.table, { padding: 1, borderStyle: "bold" });
   }).join("\n");
   return response.result(
     `
@@ -2726,7 +2739,7 @@ ${result}
 
 // src/modules/prehandlers/render-handlers/get-db.ts
 import boxen9 from "boxen";
-import chalk13 from "chalk";
+import chalk14 from "chalk";
 function normalizeQuotes3(input) {
   return input.replace(/^[\'"]+/, "").replace(/[\'"]+$/, "");
 }
@@ -2744,8 +2757,8 @@ var getDB = (prismaState, data) => {
   if (typeof prevUrl == "object" && prevUrl.name == "env") {
     prevUrl = "env(" + normalizeQuotes3(prevUrl.params[0]) + ")";
   }
-  return response.result(boxen9(`${chalk13.gray("Provider")}: ${provider}
-${chalk13.gray("URL")}: ${prevUrl}`, { padding: 1, textAlignment: "left", margin: 1, borderStyle: "double" }));
+  return response.result(boxen9(`${chalk14.gray("Provider")}: ${provider}
+${chalk14.gray("URL")}: ${prevUrl}`, { padding: 1, textAlignment: "left", margin: 1, borderStyle: "double" }));
 };
 
 // src/modules/handlers/query-render-handler.ts

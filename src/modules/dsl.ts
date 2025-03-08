@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import { PrismaQlRelationType } from "./field-relation-collector.js";
 
 export type BasePrismaQlDSLAction = "GET" | "ADD" | "DELETE" | "UPDATE" | "PRINT" | "VALIDATE";
@@ -152,6 +153,18 @@ export class PrismaQlDslParser<
     parseCommand<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand, T extends 'query' | 'mutation'>(input: string): PrismaQLParsedDSL<A, C, T> {
         const trimmed = input.trim();
         if (!trimmed.endsWith(";")) {
+const errorMessage = `
+${chalk.red("Syntax Error: Missing semicolon (;) at the end of the command.")}
+
+${chalk.yellow("Each DSL command must end with a semicolon.")} 
+For example:
+
+    ${chalk.green("GET MODELS;")}
+    ${chalk.green("DELETE MODEL Product;")}
+
+Please check your input and try again.
+`;
+console.error(errorMessage);
             throw new Error("DSL command must end with a semicolon.");
         }
         const raw = trimmed.slice(0, -1).trim();
