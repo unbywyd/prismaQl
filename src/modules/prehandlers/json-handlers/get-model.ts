@@ -4,7 +4,7 @@ import { useHelper } from "../../utils/schema-helper.js";
 import { getRelationStatistics } from "../../field-relation-logger.js";
 import { extractModelSummary } from "../../utils/model-primary-fields.js";
 
-export type FieldSummary = {
+export interface FieldSummary {
     name: string;
     type: string;
     isId: boolean;

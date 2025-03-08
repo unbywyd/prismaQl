@@ -1,4 +1,4 @@
-import { handlerResponse, PrismaQlHandler } from "src/modules/handler-registries/handler-registry.js";
+import { handlerResponse, PrismaQlHandler } from "../../handler-registries/handler-registry.js";
 
 export function normalizeQuotes(input: string): string {
     return input

@@ -1,5 +1,5 @@
-import { handlerResponse, PrismaQlHandler } from "src/modules/handler-registries/handler-registry.js";
-import { useHelper } from "src/modules/utils/schema-helper.js";
+import { handlerResponse, PrismaQlHandler } from "../../handler-registries/handler-registry.js";
+import { useHelper } from "../../utils/schema-helper.js";
 
 export const getJsonGenerators: PrismaQlHandler<"GET", "GENERATORS", 'query'> = (prismaState, data) => {
     const response = handlerResponse(data);

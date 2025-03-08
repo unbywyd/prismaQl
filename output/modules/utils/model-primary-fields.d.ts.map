@@ -1,0 +1,1 @@
+{"version":3,"file":"model-primary-fields.d.ts","sourceRoot":"","sources":["../../../src/modules/utils/model-primary-fields.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,EAAY,MAAM,qBAAqB,CAAC;AACtD,OAAO,EAAE,gBAAgB,EAAE,MAAM,gCAAgC,CAAC;AAClE,OAAO,EAAE,YAAY,EAAE,MAAM,6CAA6C,CAAC;AAG3E,wBAAgB,mBAAmB,CAAC,KAAK,EAAE,KAAK,EAAE,SAAS,EAAE,gBAAgB,EAAE,GAAG,YAAY,EAAE,CAoC/F"}

@@ -1,22 +1,22 @@
 {
   "name": "prismaql",
   "description": "A powerful tool for managing and editing Prisma schema files using a SQL-like DSL.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "exports": {
-    "import": "./output/esm/index.js",
-    "require": "./output/cjs/index.cjs"
+    "import": "./output/index.js",
+    "require": "./output/index.cjs"
   },
-  "main": "./output/cjs/index.cjs",
-  "module": "./output/esm/index.js",
-  "types": "./output/esm/index.d.ts",
+  "main": "./output/index.cjs",
+  "module": "./output/index.js",
+  "types": "./output/index.d.ts",
   "private": false,
   "type": "module",
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "tsc",
+    "dev": "tsc --watch",
     "clean": "rm -rf output"
   },
   "author": {
@@ -47,7 +47,6 @@
     "treeify": "^1.1.0"
   },
   "devDependencies": {
-    "tsup": "^8.4.0",
     "@types/treeify": "^1.0.3",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.10.10",

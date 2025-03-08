@@ -1,5 +1,5 @@
-import { handlerResponse, PrismaQlHandler } from "src/modules/handler-registries/handler-registry.js";
-import { useHelper } from "src/modules/utils/schema-helper.js";
+import { handlerResponse, PrismaQlHandler } from "../../handler-registries/handler-registry.js";
+import { useHelper } from "../../utils/schema-helper.js";
 import Table from "cli-table3";
 import boxen from "boxen";
 import chalk from "chalk";
