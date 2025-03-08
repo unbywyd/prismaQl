@@ -17,8 +17,6 @@ Designed as a **standalone library** or to be used alongside the [PrismaQL CLI](
 - **Safe & Reversible Edits** – Built-in validation with automatic backups to ensure data integrity.
 - **Flexible Relation Management** – Supports **1:1, 1:M, and M:N** relationships, including **pivot table-based relations**. Allows both **direct** and **indirect** (foreign-key-only) associations, with the ability to choose the **FK holder side** for precise schema control.
 
-> **Note:** PrismaQL is alpha-stage software. APIs may evolve, and advanced features are still in development.
-
 ---
 
 ## How It Works
@@ -223,9 +221,6 @@ prismaql "DELETE MODEL TempData;"
 ---
 
 ## Current Status
-
-🚧 **This project is in alpha (v0.0.1-alpha).**  
-⚠️ Features are actively being developed, and APIs may change.
 
 If you're interested in contributing, reporting issues, or suggesting features, check out the [GitHub repository](https://github.com/unbywyd/prismaql).
 
