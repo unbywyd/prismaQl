@@ -1,4 +1,4 @@
-import { Schema, Model, Field, Enum } from "@mrleebo/prisma-ast";
+import { Schema, Model, Field, Enum, Block } from "@mrleebo/prisma-ast";
 import { PrismaQlSchemaData } from "../prisma-schema-loader.js";
 import { Property } from "@mrleebo/prisma-ast";
 
@@ -108,6 +108,11 @@ export class PrismaQlSchemaHelper {
         return this.getModels()
             .flatMap((model) => model.properties)
             .filter((prop): prop is Field => prop.type === "field" && prop.fieldType === "relation");
+    }
+
+    getGenerators(): Block[] {
+        return this.parsedSchema.list
+            .filter((item): item is Block => item.type === "generator");
     }
 
     getModelRelations(modelName: string): Field[] {

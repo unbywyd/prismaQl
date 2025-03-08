@@ -7,10 +7,10 @@ var __export = (target, all) => {
 // src/modules/dsl.ts
 var DSL_PATTERN = /^([A-Z]+)(?:\s+([A-Z_]+))?(?:\s+([\w\s,*]+))?(?:\s*\(\{([\s\S]*?)\}\))?(?:\s*\(([^)]*?)\))?$/i;
 var ACTION_COMMAND_MAP = {
-  GET: ["MODELS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
-  ADD: ["MODEL", "FIELD", "RELATION", "ENUM"],
-  DELETE: ["MODEL", "FIELD", "RELATION", "ENUM"],
-  UPDATE: ["FIELD", "ENUM"],
+  GET: ["MODELS", "DB", "GENERATORS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
+  ADD: ["MODEL", "GENERATOR", "FIELD", "RELATION", "ENUM"],
+  DELETE: ["MODEL", "FIELD", "RELATION", "ENUM", "GENERATOR"],
+  UPDATE: ["FIELD", "ENUM", "GENERATOR", "DB"],
   PRINT: [],
   VALIDATE: []
 };
@@ -56,11 +56,15 @@ var PrismaQlDslParser = class {
     let prismaBlockStr = match[4]?.trim() || void 0;
     if (prismaBlockStr) {
       prismaBlockStr = prismaBlockStr.replace(/'/g, '"');
-      prismaBlockStr = prismaBlockStr.replace(/'/g, '"');
       prismaBlockStr = prismaBlockStr.replace(/\\n/g, "\n");
       prismaBlockStr = prismaBlockStr.replace(/\|/g, "\n");
     }
-    const optionsStr = match[5]?.trim() || void 0;
+    let optionsStr = match[5]?.trim() || void 0;
+    if (optionsStr) {
+      optionsStr = optionsStr.replace(/'/g, '"');
+      optionsStr = optionsStr.replace(/\\n/g, "\n");
+      optionsStr = optionsStr.replace(/\|/g, "\n");
+    }
     if (!(actionStr in ACTION_COMMAND_MAP) && !(actionStr in this.customCommands)) {
       throw new Error(`Unsupported action "${actionStr}". Supported actions: ${Object.keys(ACTION_COMMAND_MAP).join(", ")}`);
     }
@@ -180,6 +184,9 @@ var basePrismaQlAgsProcessor = {
     MODEL: (_, rawArgs) => {
       return { models: rawArgs ? rawArgs.split(",").map((m) => m.trim()) : [] };
     },
+    GENERATOR: (parsedArgs, rawArgs) => {
+      return { generators: rawArgs ? rawArgs.split(",").map((g) => g.trim()) : [] };
+    },
     ENUM: (_, rawArgs) => {
       return { enums: rawArgs ? rawArgs.split(",").map((e) => e.trim()) : [] };
     },
@@ -209,6 +216,9 @@ var basePrismaQlAgsProcessor = {
     },
     RELATION: (_, rawArgs) => {
       return { models: rawArgs ? rawArgs.split(",").map((e) => e.trim()) : [] };
+    },
+    GENERATOR: (_, rawArgs) => {
+      return { generators: rawArgs ? rawArgs.split(",").map((e) => e.trim()) : [] };
     }
   },
   UPDATE: {
@@ -224,6 +234,9 @@ var basePrismaQlAgsProcessor = {
     },
     ENUM: (_, rawArgs) => {
       return { enums: rawArgs ? rawArgs.split(",").map((e) => e.trim()) : [] };
+    },
+    GENERATOR: (parsedArgs, rawArgs) => {
+      return { generators: rawArgs ? rawArgs.split(",").map((g) => g.trim()) : [] };
     }
   },
   PRINT: {
@@ -1316,6 +1329,9 @@ var PrismaQlSchemaHelper = class {
   }
   getRelations() {
     return this.getModels().flatMap((model) => model.properties).filter((prop) => prop.type === "field" && prop.fieldType === "relation");
+  }
+  getGenerators() {
+    return this.parsedSchema.list.filter((item) => item.type === "generator");
   }
   getModelRelations(modelName) {
     const model = this.getModelByName(modelName);
@@ -2531,18 +2547,199 @@ var updateField = (prismaState, data) => {
   return response.result(`Field ${fieldName} added to model ${modelName}`);
 };
 
+// src/modules/prehandlers/mutation-handlers/add-generator.ts
+import { getSchema as getSchema5 } from "@mrleebo/prisma-ast";
+var addGenerator = (prismaState, data) => {
+  const { args } = data;
+  const response = handlerResponse(data);
+  const builder = prismaState.builder;
+  const generatorName = args?.generators?.[0];
+  if (!generatorName) {
+    return response.error("No generator name provided. Example: 'ADD GENERATOR ->[GeneratorName] ({key: value});'");
+  }
+  const prismaBlock = data.prismaBlock;
+  if (!prismaBlock) {
+    return response.error("No generator block provided. Example: 'ADD GENERATOR GeneratorName ->[({key: value})];'");
+  }
+  const prevGenerator = builder.findByType("generator", { name: generatorName });
+  if (prevGenerator) {
+    return response.error(`Generator ${generatorName} already exists`);
+  }
+  let parsed;
+  const sourceModel = `generator ${generatorName} {
+        ${prismaBlock}
+    }`;
+  try {
+    parsed = getSchema5(sourceModel);
+  } catch (error) {
+    return response.error(`Invalid block provided. Error parsing model: ${error.message}`);
+  }
+  const schema = prismaState.builder.getSchema();
+  const newGenerator = parsed.list[0];
+  schema.list.push(newGenerator);
+  return response.result(`Generator ${generatorName} added successfully!`);
+};
+
+// src/modules/prehandlers/mutation-handlers/update-generator.ts
+import chalk11 from "chalk";
+import { getSchema as getSchema6 } from "@mrleebo/prisma-ast";
+function normalizeQuotes(input) {
+  return input.replace(/^[\'"]+/, "").replace(/[\'"]+$/, "");
+}
+var updateGenerator = (prismaState, data) => {
+  const { args, options } = data;
+  const response = handlerResponse(data);
+  const builder = prismaState.builder;
+  const generatorName = args?.generators?.[0];
+  if (!generatorName) {
+    return response.error("No generator name provided. Example: 'ADD GENERATOR ->[GeneratorName] ({key: value});'");
+  }
+  const prevGenerator = builder.findByType("generator", { name: generatorName });
+  if (!prevGenerator) {
+    return response.error(`Generator ${generatorName} does not exist`);
+  }
+  let parsed;
+  const prismaBlock = data.prismaBlock;
+  if (prismaBlock) {
+    if (!prismaBlock) {
+      return response.error("No generator block provided. Example: 'ADD GENERATOR GeneratorName ->[({key: value})];'");
+    }
+    console.log(chalk11.yellow(`Warning: generator block provided. Generator ${generatorName} will be replaced`));
+    builder.drop(prevGenerator.name);
+    const sourceModel = `generator ${generatorName} {
+        ${prismaBlock}
+    }`;
+    try {
+      parsed = getSchema6(sourceModel);
+    } catch (error) {
+      return response.error(`Invalid block provided. Error parsing model: ${error.message}`);
+    }
+    const schema = prismaState.builder.getSchema();
+    const newGenerator = parsed.list[0];
+    schema.list.push(newGenerator);
+  } else if (options && Object.keys(options).length) {
+    const generator = builder.generator(generatorName);
+    const otherOptions = Object.keys(options).filter((key) => key !== "output" && key !== "provider");
+    if (otherOptions.length) {
+      console.log(chalk11.yellow(`Warning: unknown options ${otherOptions.join(", ")} will be skipped`));
+      const validOptions = ["output", "provider"];
+      console.log(chalk11.yellow(`Valid options are: ${validOptions.join(", ")}`));
+    }
+    if (options?.output) {
+      generator.assignment("output", normalizeQuotes(options.output));
+    }
+    if (options?.provider) {
+      generator.assignment("provider", normalizeQuotes(options.provider));
+    }
+  }
+  return response.result(`Generator ${generatorName} added successfully!`);
+};
+
+// src/modules/prehandlers/mutation-handlers/update-db.ts
+function normalizeQuotes2(input) {
+  return input.replace(/^[\'"]+/, "").replace(/[\'"]+$/, "");
+}
+var updateDB = (prismaState, data) => {
+  const { options } = data;
+  const response = handlerResponse(data);
+  if (!options?.provider && !options?.url) {
+    return response.error("No provider or url provided. Example: 'UPDATE DB (->[url='sqlite://prisma.db' provider='sqlite']);'");
+  }
+  const builder = prismaState.builder;
+  const prev = builder.findByType("datasource", {
+    name: "db"
+  });
+  if (!prev) {
+    return response.error("No datasource found");
+  }
+  const provider = (options.provider ? `"${options.provider}"` : null) || prev?.assignments?.find((a) => a.key == "provider")?.value;
+  let prevUrl = options.url?.toString() || prev?.assignments?.find((a) => a.key == "url")?.value;
+  if (typeof prevUrl == "object" && prevUrl.name == "env") {
+    prevUrl = {
+      env: normalizeQuotes2(prevUrl.params[0])
+    };
+  }
+  builder.datasource(provider, prevUrl || {
+    env: "DATABASE_URL"
+  });
+  return response.result(`DB updated successfully`);
+};
+
 // src/modules/handlers/mutation-handler.ts
 var mutationsHandler = new PrismaQlMutationHandlerRegistry();
 mutationsHandler.register("ADD", "MODEL", addModel);
 mutationsHandler.register("ADD", "FIELD", addField);
 mutationsHandler.register("ADD", "ENUM", addEnum);
 mutationsHandler.register("ADD", "RELATION", addRelation);
+mutationsHandler.register("ADD", "GENERATOR", addGenerator);
 mutationsHandler.register("DELETE", "ENUM", deleteEnum);
 mutationsHandler.register("DELETE", "MODEL", deleteModel);
 mutationsHandler.register("DELETE", "FIELD", deleteField);
 mutationsHandler.register("DELETE", "RELATION", deleteRelation);
+mutationsHandler.register("DELETE", "GENERATOR", deleteRelation);
 mutationsHandler.register("UPDATE", "FIELD", updateField);
 mutationsHandler.register("UPDATE", "ENUM", updateEnum);
+mutationsHandler.register("UPDATE", "GENERATOR", updateGenerator);
+mutationsHandler.register("UPDATE", "DB", updateDB);
+
+// src/modules/prehandlers/render-handlers/get-generators.ts
+import Table2 from "cli-table3";
+import boxen8 from "boxen";
+import chalk12 from "chalk";
+var getGenerators = (prismaState, data) => {
+  const response = handlerResponse(data);
+  const helper = useHelper(prismaState);
+  const generators = helper.getGenerators();
+  if (!generators) return response.result("No generators found.");
+  const sections = [];
+  generators.forEach((generator) => {
+    const table = new Table2({
+      head: ["Property", "Value"],
+      colWidths: [20, 50]
+    });
+    generator?.assignments?.forEach((assignment) => {
+      if (!assignment) return;
+      table.push([assignment?.key, assignment?.value]);
+    });
+    sections.push({
+      name: generator.name,
+      table: table.toString()
+    });
+  });
+  const result = sections.map((section) => {
+    return boxen8(chalk12.bold(section.name) + "\n" + section.table, { padding: 1, borderStyle: "bold" });
+  }).join("\n");
+  return response.result(
+    `
+Generators found: ${generators.length}
+${result}
+`
+  );
+};
+
+// src/modules/prehandlers/render-handlers/get-db.ts
+import boxen9 from "boxen";
+import chalk13 from "chalk";
+function normalizeQuotes3(input) {
+  return input.replace(/^[\'"]+/, "").replace(/[\'"]+$/, "");
+}
+var getDB = (prismaState, data) => {
+  const response = handlerResponse(data);
+  const builder = prismaState.builder;
+  const prev = builder.findByType("datasource", {
+    name: "db"
+  });
+  if (!prev) {
+    return response.error("No datasource found");
+  }
+  const provider = prev?.assignments?.find((a) => a.key == "provider")?.value;
+  let prevUrl = prev?.assignments?.find((a) => a.key == "url")?.value;
+  if (typeof prevUrl == "object" && prevUrl.name == "env") {
+    prevUrl = "env(" + normalizeQuotes3(prevUrl.params[0]) + ")";
+  }
+  return response.result(boxen9(`${chalk13.gray("Provider")}: ${provider}
+${chalk13.gray("URL")}: ${prevUrl}`, { padding: 1, textAlignment: "left", margin: 1, borderStyle: "double" }));
+};
 
 // src/modules/handlers/query-render-handler.ts
 var queryRendersHandler = new PrismaQlQueryHandlerRegistry();
@@ -2553,6 +2750,38 @@ queryRendersHandler.register("GET", "ENUMS", getEnums);
 queryRendersHandler.register("GET", "MODELS_LIST", getModelNames);
 queryRendersHandler.register("GET", "RELATIONS", getRelations);
 queryRendersHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
+queryRendersHandler.register("GET", "GENERATORS", getGenerators);
+queryRendersHandler.register("GET", "DB", getDB);
+
+// src/modules/prehandlers/json-handlers/get-generators.ts
+var getJsonGenerators = (prismaState, data) => {
+  const response = handlerResponse(data);
+  const helper = useHelper(prismaState);
+  const generators = helper.getGenerators();
+  if (!generators) return response.result({
+    total: 0,
+    generators: []
+  });
+  const sections = [];
+  generators.forEach((generator) => {
+    const props = [];
+    generator?.assignments?.forEach((assignment) => {
+      if (!assignment) return;
+      props.push({
+        key: assignment?.key,
+        value: assignment?.value
+      });
+    });
+    sections.push({
+      name: generator.name,
+      properties: props
+    });
+  });
+  return response.result({
+    total: generators.length,
+    generators: sections
+  });
+};
 
 // src/modules/handlers/query-json-handler.ts
 var queryJSONHandler = new PrismaQlQueryHandlerRegistry();
@@ -2563,6 +2792,7 @@ queryJSONHandler.register("GET", "ENUMS", getJsonEnums);
 queryJSONHandler.register("GET", "MODELS_LIST", getJsonModelNames);
 queryJSONHandler.register("GET", "RELATIONS", getJsonRelations);
 queryJSONHandler.register("GET", "ENUM_RELATIONS", getEnumRelations);
+queryJSONHandler.register("GET", "GENERATORS", getJsonGenerators);
 export {
   PrismaQlDslParser,
   PrismaQlFieldRelationLogger,

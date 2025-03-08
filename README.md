@@ -78,6 +78,16 @@ ACTION COMMAND ...ARGS ({PRISMA_BLOCK}) (OPTIONS)
 - **Description**: Shows relations among specified models. Accepts an optional depth.
 - **Usage**: `GET RELATIONS User, Post (depth=2);`
 
+### `GET DB`
+
+- **Description**: Outputs the provider's current database connection and url.
+- **Usage**: `GET DB;`
+
+### `GET GENERATORS`
+
+- **Description**: Lists all generators in the schema.
+- **Usage**: `GET GENERATORS;`
+
 ### `GET ENUMS (raw?)`
 
 - **Description**: Lists all enums in a formatted or raw representation.
@@ -184,6 +194,39 @@ ACTION COMMAND ...ARGS ({PRISMA_BLOCK}) (OPTIONS)
   UPDATE ENUM Role ({ADMIN|SUPERADMIN}) (replace=true);
   ```
 
+### `UPDATE DB (url='...', provider='...')`
+
+- **Description**: Updates the database connection URL and provider.
+- **Example**:
+  ```
+  UPDATE DB (
+      url='mysql://user:password@localhost:3306/db',
+      provider='mysql'
+  );
+  ```
+
+### `UPDATE GENERATOR <name> ({...})(provider='...', output='...')`
+
+- **Description**: Updates a generator with new options.
+- **Example**:
+  ```
+  UPDATE GENERATOR client ({provider='prisma-client-js', output='@prisma/client'});
+  ```
+
+### `ADD GENERATOR <name> ({...})`
+
+- **Description**: Adds a new generator to the schema.
+- **Example**:
+  ```
+  ADD GENERATOR client ({provider='', output=''});
+  ```
+
+### `DELETE GENERATOR <name>`
+- **Description**: Removes a generator from the schema.
+- **Example**:
+  ```
+  DELETE GENERATOR client;
+  ```
 ---
 
 ## Flow of Execution

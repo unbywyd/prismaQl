@@ -1,5 +1,5 @@
 import { DMMF } from '@prisma/generator-helper';
-import { getSchema, createPrismaSchemaBuilder, Model as Model$1, Property, Schema, Field, Enum } from '@mrleebo/prisma-ast';
+import { getSchema, createPrismaSchemaBuilder, Model as Model$1, Property, Schema, Field, Enum, Block } from '@mrleebo/prisma-ast';
 
 type PrismaQlRelationType = "1:1" | "1:M" | "M:N";
 interface PrismaQLRelation {
@@ -40,7 +40,7 @@ declare const getManyToManyTableName: (modelA: string, modelB: string, relationN
 declare const getManyToManyModelName: (modelA: string, modelB: string, relationName?: string) => string;
 
 type BasePrismaQlDSLAction = "GET" | "ADD" | "DELETE" | "UPDATE" | "PRINT" | "VALIDATE";
-type BasePrismaQLDSLCommand = "MODELS" | "MODEL" | "FIELD" | "FIELDS" | "RELATIONS" | "ENUM_RELATIONS" | "ENUMS" | "ENUM" | "MODELS_LIST" | "RELATION";
+type BasePrismaQLDSLCommand = "MODELS" | "MODEL" | "FIELD" | "FIELDS" | "RELATIONS" | "DB" | "ENUM_RELATIONS" | "ENUMS" | "ENUM" | "MODELS_LIST" | "RELATION" | "GENERATOR" | "GENERATORS";
 type PrismaQlDSLAction<A extends string = BasePrismaQlDSLAction> = A;
 type PrismaQLDSLCommand<C extends string = BasePrismaQLDSLCommand> = C;
 type PrismaQlDSLType = "query" | "mutation";
@@ -50,6 +50,7 @@ type PrismaQLDSLArgs<A extends PrismaQlDSLAction, C extends PrismaQLDSLCommand |
     models?: string[];
     fields?: string[];
     enums?: string[];
+    generators?: string[];
 };
 type DSLPrismaRelationType = PrismaQlRelationType;
 type PrismaQlDSLOptionMap = {
@@ -73,6 +74,14 @@ type PrismaQlDSLOptionMap = {
     UPDATE: {
         ENUM: {
             replace: boolean;
+        };
+        GENERATOR: {
+            output?: string;
+            provider?: string;
+        };
+        DB: {
+            provider?: string;
+            url?: string;
         };
     };
     DELETE: {
@@ -299,6 +308,7 @@ declare class PrismaQlSchemaHelper {
         field: Field;
     }>;
     getRelations(): Field[];
+    getGenerators(): Block[];
     getModelRelations(modelName: string): Field[];
 }
 declare const useHelper: (schema: Schema | PrismaQlSchemaData) => PrismaQlSchemaHelper;

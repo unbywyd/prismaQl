@@ -8,11 +8,14 @@ export type BasePrismaQLDSLCommand =
     | "FIELD"
     | "FIELDS"
     | "RELATIONS"
+    | "DB"
     | "ENUM_RELATIONS"
     | "ENUMS"
     | "ENUM"
     | "MODELS_LIST"
-    | "RELATION";
+    | "RELATION"
+    | "GENERATOR"
+    | "GENERATORS";
 
 export type PrismaQlDSLAction<A extends string = BasePrismaQlDSLAction> = A;
 export type PrismaQLDSLCommand<C extends string = BasePrismaQLDSLCommand> = C;
@@ -26,6 +29,7 @@ export type PrismaQLDSLArgs<A extends PrismaQlDSLAction, C extends PrismaQLDSLCo
     models?: string[];
     fields?: string[];
     enums?: string[];
+    generators?: string[];
 };
 
 export type DSLPrismaRelationType = PrismaQlRelationType;
@@ -47,6 +51,14 @@ export type PrismaQlDSLOptionMap = {
     UPDATE: {
         ENUM: {
             replace: boolean;
+        },
+        GENERATOR: {
+            output?: string;
+            provider?: string;
+        },
+        DB: {
+            provider?: string;
+            url?: string;
         }
     },
     DELETE: {
@@ -91,10 +103,10 @@ export type PrismaQlDSLArgsProcessor<
 const DSL_PATTERN = /^([A-Z]+)(?:\s+([A-Z_]+))?(?:\s+([\w\s,*]+))?(?:\s*\(\{([\s\S]*?)\}\))?(?:\s*\(([^)]*?)\))?$/i;
 
 const ACTION_COMMAND_MAP: Record<PrismaQlDSLAction, PrismaQLDSLCommand[]> = {
-    GET: ["MODELS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
-    ADD: ["MODEL", "FIELD", "RELATION", "ENUM"],
-    DELETE: ["MODEL", "FIELD", "RELATION", "ENUM"],
-    UPDATE: ["FIELD", "ENUM"],
+    GET: ["MODELS", "DB", "GENERATORS", "MODEL", "ENUM_RELATIONS", "FIELDS", "RELATIONS", "ENUMS", "MODELS_LIST"],
+    ADD: ["MODEL", "GENERATOR", "FIELD", "RELATION", "ENUM"],
+    DELETE: ["MODEL", "FIELD", "RELATION", "ENUM", "GENERATOR"],
+    UPDATE: ["FIELD", "ENUM", "GENERATOR", "DB"],
     PRINT: [],
     VALIDATE: [],
 };
@@ -151,11 +163,16 @@ export class PrismaQlDslParser<
         let prismaBlockStr = match[4]?.trim() || undefined;
         if (prismaBlockStr) {
             prismaBlockStr = prismaBlockStr.replace(/'/g, '"');
-            prismaBlockStr = prismaBlockStr.replace(/'/g, '"');
             prismaBlockStr = prismaBlockStr.replace(/\\n/g, "\n");
             prismaBlockStr = prismaBlockStr.replace(/\|/g, "\n");
         }
-        const optionsStr = match[5]?.trim() || undefined;
+        let optionsStr = match[5]?.trim() || undefined;
+        if (optionsStr) {
+            optionsStr = optionsStr.replace(/'/g, '"');
+            optionsStr = optionsStr.replace(/\\n/g, "\n");
+            optionsStr = optionsStr.replace(/\|/g, "\n");
+        }
+
         if (!(actionStr in ACTION_COMMAND_MAP) && !(actionStr in this.customCommands)) {
             throw new Error(`Unsupported action "${actionStr}". Supported actions: ${Object.keys(ACTION_COMMAND_MAP).join(", ")}`);
         }
@@ -285,6 +302,9 @@ export const basePrismaQlAgsProcessor: Record<
         MODEL: (_, rawArgs) => {
             return { models: rawArgs ? rawArgs.split(",").map(m => m.trim()) : [] };
         },
+        GENERATOR: (parsedArgs, rawArgs) => {
+            return { generators: rawArgs ? rawArgs.split(",").map(g => g.trim()) : [] };
+        },
         ENUM: (_, rawArgs) => {
             return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
         },
@@ -314,6 +334,9 @@ export const basePrismaQlAgsProcessor: Record<
         },
         RELATION: (_, rawArgs) => {
             return { models: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
+        },
+        GENERATOR: (_, rawArgs) => {
+            return { generators: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
         }
     },
     UPDATE: {
@@ -328,6 +351,9 @@ export const basePrismaQlAgsProcessor: Record<
         },
         ENUM: (_, rawArgs) => {
             return { enums: rawArgs ? rawArgs.split(",").map(e => e.trim()) : [] };
+        },
+        GENERATOR: (parsedArgs, rawArgs) => {
+            return { generators: rawArgs ? rawArgs.split(",").map(g => g.trim()) : [] };
         }
     },
     PRINT: {
