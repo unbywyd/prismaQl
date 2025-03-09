@@ -1603,8 +1603,7 @@ async function validatePrismaSchema(schema) {
 // src/modules/utils/load-prisma-schema.ts
 var import_fs = __toESM(require("fs"), 1);
 var import_path = __toESM(require("path"), 1);
-var loadPrismaSchema = async (inputPath) => {
-  const cwd = process.cwd();
+var loadPrismaSchema = async (cwd, inputPath) => {
   let schemaPath = null;
   if (inputPath) {
     const resolvedPath = import_path.default.isAbsolute(inputPath) ? inputPath : import_path.default.resolve(cwd, inputPath);
@@ -1653,10 +1652,12 @@ var PrismaQlSchemaLoader = class {
     if (options.backupPath) {
       this.backupPath = options.backupPath;
     }
+    this.cwd = options?.cwd || process.cwd();
   }
   lastValidatedSchema = null;
   prismaState = null;
   backupPath = null;
+  cwd;
   async rebase() {
     const schema = this.prismaState?.builder.print({ sort: true });
     const parsedSchema = (0, import_prisma_ast.getSchema)(schema);
@@ -1674,7 +1675,7 @@ var PrismaQlSchemaLoader = class {
     if (this.prismaState && !forceReload) {
       return this.prismaState;
     }
-    const { schema, path: path3 } = await loadPrismaSchema(filePath);
+    const { schema, path: path3 } = await loadPrismaSchema(this.cwd, filePath);
     return this.prepareSchema(schema, path3);
   }
   async collectRelations() {
@@ -1729,7 +1730,7 @@ var PrismaQlSchemaLoader = class {
     }
     let outputPath = sourcePath;
     if (sourcePath && !import_path2.default.isAbsolute(sourcePath)) {
-      outputPath = import_path2.default.join(process.cwd(), sourcePath);
+      outputPath = import_path2.default.join(this.cwd, sourcePath);
     }
     if (!this.prismaState?.schemaPath && !outputPath) {
       throw new Error("Cannot save schema without a path, please provide a path!");

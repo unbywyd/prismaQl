@@ -34,8 +34,7 @@ __export(load_prisma_schema_exports, {
 module.exports = __toCommonJS(load_prisma_schema_exports);
 var import_fs = __toESM(require("fs"), 1);
 var import_path = __toESM(require("path"), 1);
-var loadPrismaSchema = async (inputPath) => {
-  const cwd = process.cwd();
+var loadPrismaSchema = async (cwd, inputPath) => {
   let schemaPath = null;
   if (inputPath) {
     const resolvedPath = import_path.default.isAbsolute(inputPath) ? inputPath : import_path.default.resolve(cwd, inputPath);

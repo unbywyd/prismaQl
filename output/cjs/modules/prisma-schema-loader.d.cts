@@ -11,6 +11,7 @@ type PrismaQlSchemaData = {
 };
 type PrismaQlSchemaLoaderOptions = {
     backupPath?: string;
+    cwd?: string;
 };
 declare class PrismaQlSchemaLoader {
     relationCollector: PrismaQlRelationCollector;
@@ -18,6 +19,7 @@ declare class PrismaQlSchemaLoader {
     private lastValidatedSchema;
     private readonly prismaState;
     private backupPath;
+    private cwd;
     constructor(relationCollector: PrismaQlRelationCollector, options?: PrismaQlSchemaLoaderOptions);
     rebase(): Promise<void>;
     getSchemaPath(): string | undefined;

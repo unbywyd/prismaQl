@@ -49,9 +49,13 @@ export class PrismaQlProvider {
             }
         }
         const hasMutations = responses.some((r) => r.parsedCommand.type === 'mutation');
-        if (options.confirm && options.save && hasMutations && !options.dryRun) {
-            const confirmed = await options.confirm(highlightPrismaSchema.highlight(this.loader.print()));
-            if (confirmed) {
+        if (options.save && hasMutations && !options.dryRun) {
+            if (options.confirm) {
+                const confirmed = await options.confirm(highlightPrismaSchema.highlight(this.loader.print()));
+                if (confirmed) {
+                    await this.save();
+                }
+            } else {
                 await this.save();
             }
         }

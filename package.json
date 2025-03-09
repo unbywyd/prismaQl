@@ -1,7 +1,7 @@
 {
   "name": "prismaql",
   "description": "A powerful tool for managing and editing Prisma schema files using a SQL-like DSL.",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "exports": {
     "import": "./output/esm/index.js",
     "require": "./output/cjs/index.cjs"

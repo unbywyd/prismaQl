@@ -15,12 +15,14 @@ export class PrismaQlSchemaLoader {
     lastValidatedSchema = null;
     prismaState = null;
     backupPath = null;
+    cwd;
     constructor(relationCollector, options = {}) {
         this.relationCollector = relationCollector;
         this.options = options;
         if (options.backupPath) {
             this.backupPath = options.backupPath;
         }
+        this.cwd = options?.cwd || process.cwd();
     }
     async rebase() {
         const schema = this.prismaState?.builder.print({ sort: true });
@@ -39,7 +41,7 @@ export class PrismaQlSchemaLoader {
         if (this.prismaState && !forceReload) {
             return this.prismaState;
         }
-        const { schema, path } = await loadPrismaSchema(filePath);
+        const { schema, path } = await loadPrismaSchema(this.cwd, filePath);
         return this.prepareSchema(schema, path);
     }
     async collectRelations() {
@@ -94,7 +96,7 @@ export class PrismaQlSchemaLoader {
         }
         let outputPath = sourcePath;
         if (sourcePath && !path.isAbsolute(sourcePath)) {
-            outputPath = path.join(process.cwd(), sourcePath);
+            outputPath = path.join(this.cwd, sourcePath);
         }
         if (!this.prismaState?.schemaPath && !outputPath) {
             throw new Error('Cannot save schema without a path, please provide a path!');

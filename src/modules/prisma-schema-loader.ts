@@ -22,11 +22,13 @@ export type PrismaQlSchemaData = {
 
 export type PrismaQlSchemaLoaderOptions = {
     backupPath?: string;
+    cwd?: string;
 }
 export class PrismaQlSchemaLoader {
     private lastValidatedSchema: string | null = null;
     private readonly prismaState: PrismaQlSchemaData | null = null;
     private backupPath: string | null = null;
+    private cwd: string;
     constructor(
         public relationCollector: PrismaQlRelationCollector,
         public options: PrismaQlSchemaLoaderOptions = {}
@@ -34,6 +36,7 @@ export class PrismaQlSchemaLoader {
         if (options.backupPath) {
             this.backupPath = options.backupPath;
         }
+        this.cwd = options?.cwd || process.cwd();
     }
     async rebase() {
         const schema = this.prismaState?.builder.print({ sort: true });
@@ -52,7 +55,7 @@ export class PrismaQlSchemaLoader {
         if (this.prismaState && !forceReload) {
             return this.prismaState;
         }
-        const { schema, path } = await loadPrismaSchema(filePath);
+        const { schema, path } = await loadPrismaSchema(this.cwd, filePath);
         return this.prepareSchema(schema, path);
     }
     async collectRelations() {
@@ -110,7 +113,7 @@ export class PrismaQlSchemaLoader {
 
         let outputPath = sourcePath;
         if (sourcePath && !path.isAbsolute(sourcePath)) {
-            outputPath = path.join(process.cwd(), sourcePath);
+            outputPath = path.join(this.cwd, sourcePath);
         }
 
         if (!this.prismaState?.schemaPath && !outputPath) {

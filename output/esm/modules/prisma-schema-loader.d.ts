@@ -9,6 +9,7 @@ export type PrismaQlSchemaData = {
 };
 export type PrismaQlSchemaLoaderOptions = {
     backupPath?: string;
+    cwd?: string;
 };
 export declare class PrismaQlSchemaLoader {
     relationCollector: PrismaQlRelationCollector;
@@ -16,6 +17,7 @@ export declare class PrismaQlSchemaLoader {
     private lastValidatedSchema;
     private readonly prismaState;
     private backupPath;
+    private cwd;
     constructor(relationCollector: PrismaQlRelationCollector, options?: PrismaQlSchemaLoaderOptions);
     rebase(): Promise<void>;
     getSchemaPath(): string | undefined;

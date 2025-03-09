@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
-export const loadPrismaSchema = async (inputPath) => {
-    const cwd = process.cwd();
+export const loadPrismaSchema = async (cwd, inputPath) => {
     let schemaPath = null;
     // Check if a path is provided
     if (inputPath) {

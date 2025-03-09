@@ -1,4 +1,4 @@
-export declare const loadPrismaSchema: (inputPath?: string) => Promise<{
+export declare const loadPrismaSchema: (cwd: string, inputPath?: string) => Promise<{
     schema: string;
     path: string;
 }>;
