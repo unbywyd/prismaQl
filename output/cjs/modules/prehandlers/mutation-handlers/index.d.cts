@@ -1,0 +1,16 @@
+export { addEnum } from './add-enum.cjs';
+export { addField } from './add-field.cjs';
+export { addModel } from './add-model.cjs';
+export { addRelation } from './add-relation.cjs';
+export { deleteEnum } from './delete-enum.cjs';
+export { deleteField } from './delete-field.cjs';
+export { deleteModel } from './delete-model.cjs';
+export { deleteRelation } from './delete-relations.cjs';
+export { updateEnum } from './update-enum.cjs';
+export { updateField } from './update-field.cjs';
+import '../../handler-registries/handler-registry.cjs';
+import '../../dsl.cjs';
+import '../../field-relation-collector.cjs';
+import '@prisma/generator-helper';
+import '../../prisma-schema-loader.cjs';
+import '@mrleebo/prisma-ast';

@@ -3,7 +3,7 @@
         "target": "ES2022",
         "module": "NodeNext",
         "noImplicitAny": true,
-        "outDir": "./output/",
+        "outDir": "./output/esm",
         "declaration": true,
         "declarationMap": true,
         "emitDeclarationOnly": false,

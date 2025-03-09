@@ -1,22 +1,24 @@
 {
   "name": "prismaql",
   "description": "A powerful tool for managing and editing Prisma schema files using a SQL-like DSL.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "exports": {
-    "import": "./output/index.js",
-    "require": "./output/index.cjs"
+    "import": "./output/esm/index.js",
+    "require": "./output/cjs/index.cjs"
   },
-  "main": "./output/index.cjs",
-  "module": "./output/index.js",
-  "types": "./output/index.d.ts",
+  "main": "./output/esm/index.js",
+  "module": "./output/esm/index.js",
+  "types": "./output/esm/index.d.ts",
   "private": false,
   "type": "module",
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc",
+    "build:cjs": "tsup",
+    "dev": "tsc -w -p tsconfig.esm.json",
     "clean": "rm -rf output"
   },
   "author": {
@@ -47,10 +49,12 @@
     "treeify": "^1.1.0"
   },
   "devDependencies": {
-    "@types/treeify": "^1.0.3",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.10.10",
     "@types/pluralize": "^0.0.33",
+    "@types/treeify": "^1.0.3",
+    "replace-in-file": "^8.3.0",
+    "tsup": "^8.4.0",
     "typescript": "^5.7.2"
   },
   "repository": {
