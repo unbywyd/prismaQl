@@ -6,6 +6,7 @@ import PrismaQlSchemaLoader from "./prisma-schema-loader.js";
 export type PrismaQlMutationOptions = {
     save?: boolean;
     dryRun?: boolean;
+    forceApplyAll?: boolean;
     confirm?: (schema: string) => Promise<boolean>;
 };
 export declare class PrismaQlProvider {
