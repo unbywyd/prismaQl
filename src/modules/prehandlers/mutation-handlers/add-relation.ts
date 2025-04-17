@@ -83,7 +83,7 @@ export const addRelation: PrismaQlHandler<"ADD", "RELATION", "mutation"> = (pris
                 builder.model(pivotModelName!)
                     .field("createdAt", "DateTime").attribute("default", ["now()"])
                     .field(fkA, idFieldModelA).attribute("unique")
-                    .field(fkB, idFieldModelB).attribute("unique")
+                    .field(fkB, idFieldModelB)
                     .blockAttribute("id", [fkA, fkB])
                     .field(modelA.toLowerCase(), modelA).attribute("relation", [
                         relationName,
@@ -97,10 +97,9 @@ export const addRelation: PrismaQlHandler<"ADD", "RELATION", "mutation"> = (pris
             } else {
                 builder.model(pivotModelName!)
                     .field(fkA, idFieldModelA).attribute("unique")
-                    .field(fkB, idFieldModelB).attribute("unique")
+                    .field(fkB, idFieldModelB)
                     .field("createdAt", "DateTime").attribute("default", ["now()"])
                     .blockAttribute("id", [fkA, fkB]);
-
             }
 
             return response.result(`One-to-One relation (with pivot table) added between ${modelA} and ${modelB}`);

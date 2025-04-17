@@ -73,7 +73,7 @@ export const addRelation = (prismaState, data) => {
                 builder.model(pivotModelName)
                     .field("createdAt", "DateTime").attribute("default", ["now()"])
                     .field(fkA, idFieldModelA).attribute("unique")
-                    .field(fkB, idFieldModelB).attribute("unique")
+                    .field(fkB, idFieldModelB)
                     .blockAttribute("id", [fkA, fkB])
                     .field(modelA.toLowerCase(), modelA).attribute("relation", [
                     relationName,
@@ -87,7 +87,7 @@ export const addRelation = (prismaState, data) => {
             else {
                 builder.model(pivotModelName)
                     .field(fkA, idFieldModelA).attribute("unique")
-                    .field(fkB, idFieldModelB).attribute("unique")
+                    .field(fkB, idFieldModelB)
                     .field("createdAt", "DateTime").attribute("default", ["now()"])
                     .blockAttribute("id", [fkA, fkB]);
             }
