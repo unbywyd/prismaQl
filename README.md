@@ -1,9 +1,12 @@
+
 # PrismaQL Core - Advanced Prisma Schema Editing Library
 
 [![npm version](https://img.shields.io/npm/v/prismaql?color=blue)](https://www.npmjs.com/package/prismaql)
 [![license](https://img.shields.io/npm/l/prismaql.svg)](LICENSE.md)
 [![GitHub issues](https://img.shields.io/github/issues/unbywyd/prismaql)](https://github.com/unbywyd/prismaql/issues)
 [![GitHub stars](https://img.shields.io/github/stars/unbywyd/prismaql?style=social)](https://github.com/unbywyd/prismaql)
+
+> This tool is actively used in the [TSDIApi.com](https://tsdiapi.com) framework for schema management and database operations.
 
 ## Introduction
 
@@ -230,3 +233,7 @@ If you're interested in contributing, reporting issues, or suggesting features, 
 
 PrismaQL Core is licensed under the **MIT License**.
 © 2025 [Artyom Gorlovetskiy](https://unbywyd.com).
+
+## Additional Resources
+
+- [Mutation Commands Documentation](./MutationCommands.md) - Detailed CLI examples and descriptions for all mutation commands.
