@@ -107,20 +107,25 @@ export const addRelation: PrismaQlHandler<"ADD", "RELATION", "mutation"> = (pris
         }
     } else if (type == "1:M") {
         if (!pivotTable) {
+            const required = options?.required;
             const aModelName = options?.fkHolder || modelA;
             const bModelName = aModelName === modelA ? modelB : modelA;
 
             const idFieldModelB = (helper.getIdFieldTypeModel(bModelName) || 'String') as string;
             const fkKey = fk(bModelName);
             const refModelKey = selfPrefix(bModelName);
-            builder.model(aModelName)
-                .field(fkKey, isOptional(idFieldModelB)) //.attribute("unique")
 
-                .field(refModelKey, isOptional(bModelName))
-                .attribute("relation", [relationName, `fields: [${fkKey}]`, `references: [id]`]);
+            const fkFieldName = options?.fkName || fkKey;
+            const pluralName = options?.pluralName || pluralize.plural(camelCase(aModelName));
+            const refFieldName = options?.refName || refModelKey;
+
+            builder.model(aModelName)
+                .field(fkFieldName, !required ? isOptional(idFieldModelB) : idFieldModelB)
+                .field(refFieldName, !required ? isOptional(bModelName) : bModelName)
+                .attribute("relation", [relationName, `fields: [${fkFieldName}]`, `references: [id]`]);
 
             builder.model(bModelName)
-                .field(pluralize.plural(camelCase(aModelName)), aModelName + "[]")
+                .field(pluralName, aModelName + "[]")
                 .attribute("relation", [relationName]);
 
             return response.result(`One-to-Many relation added between ${modelA} and ${modelB}`);

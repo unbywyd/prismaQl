@@ -30,6 +30,9 @@ export type PrismaQlDSLOptionMap = {
             fkHolder?: string;
             required?: boolean;
             relationName?: string;
+            pluralName?: string;
+            fkName?: string;
+            refName?: string;
         };
         MODEL: {
             empty?: boolean;
