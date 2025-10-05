@@ -245,7 +245,7 @@ console.error(errorMessage);
                     result[key] = valueStr;
                 }
                 if (valueStr.includes(",")) {
-                    result[key] = valueStr.split(",").map(v => v.trim());
+                    result[key] = valueStr.split(",").map(v => v.trim().replace(/^["']+|["']+$/g, ''));
                 } else {
                     try {
                         result[key] = JSON.parse(valueStr);
