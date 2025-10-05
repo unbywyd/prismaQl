@@ -48,10 +48,10 @@ export const updateGenerator: PrismaQlHandler<"UPDATE", "GENERATOR", "mutation">
         schema.list.push(newGenerator);
     } else if (options && Object.keys(options).length) {
         const generator = builder.generator(generatorName);
-        const otherOptions = Object.keys(options).filter(key => key !== 'output' && key !== 'provider' && key !== 'binaryTargets');
+        const otherOptions = Object.keys(options).filter(key => key !== 'output' && key !== 'provider');
         if (otherOptions.length) {
             console.log(chalk.yellow(`Warning: unknown options ${otherOptions.join(', ')} will be skipped`));
-            const validOptions = ['output', 'provider', 'binaryTargets'];
+            const validOptions = ['output', 'provider'];
             console.log(chalk.yellow(`Valid options are: ${validOptions.join(', ')}`));
         }
         if (options?.output) {
@@ -59,13 +59,6 @@ export const updateGenerator: PrismaQlHandler<"UPDATE", "GENERATOR", "mutation">
         }
         if (options?.provider) {
             generator.assignment('provider', normalizeQuotes(options.provider));
-        }
-        if (options?.binaryTargets) {
-            // Convert array to Prisma format: ["item1", "item2"] -> '["item1", "item2"]'
-            const binaryTargets = Array.isArray(options.binaryTargets) 
-                ? JSON.stringify(options.binaryTargets)
-                : options.binaryTargets;
-            generator.assignment('binaryTargets', binaryTargets);
         }
     }
 

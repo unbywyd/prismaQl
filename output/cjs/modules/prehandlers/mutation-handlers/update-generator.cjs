@@ -1651,6 +1651,7 @@ var updateGenerator = (prismaState, data) => {
       generator.assignment("provider", normalizeQuotes(options.provider));
     }
     if (options?.binaryTargets) {
+      console.log(options.binaryTargets);
       const binaryTargets = Array.isArray(options.binaryTargets) ? JSON.stringify(options.binaryTargets) : options.binaryTargets;
       generator.assignment("binaryTargets", binaryTargets);
     }

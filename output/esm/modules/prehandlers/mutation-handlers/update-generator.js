@@ -54,6 +54,7 @@ export const updateGenerator = (prismaState, data) => {
             generator.assignment('provider', normalizeQuotes(options.provider));
         }
         if (options?.binaryTargets) {
+            console.log(options.binaryTargets);
             // Convert array to Prisma format: ["item1", "item2"] -> '["item1", "item2"]'
             const binaryTargets = Array.isArray(options.binaryTargets)
                 ? JSON.stringify(options.binaryTargets)

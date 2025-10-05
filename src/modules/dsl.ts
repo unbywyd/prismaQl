@@ -63,7 +63,6 @@ export type PrismaQlDSLOptionMap = {
         GENERATOR: {
             output?: string;
             provider?: string;
-            binaryTargets?: string | string[];
         },
         DB: {
             provider?: string;
@@ -245,7 +244,7 @@ console.error(errorMessage);
                     result[key] = valueStr;
                 }
                 if (valueStr.includes(",")) {
-                    result[key] = valueStr.split(",").map(v => v.trim().replace(/^["']+|["']+$/g, ''));
+                    result[key] = valueStr.split(",").map(v => v.trim());
                 } else {
                     try {
                         result[key] = JSON.parse(valueStr);
