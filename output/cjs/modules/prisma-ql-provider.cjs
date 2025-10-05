@@ -1887,13 +1887,15 @@ var PrismaQlProvider = class {
     for (const command of commandsArray) {
       try {
         const result = await this.apply(command);
-        if (result?.response?.error) {
+        if (result?.response?.error && !options.forceApplyAll) {
           throw new Error("string" === typeof result.response.error ? result.response.error : "Error applying command");
         }
         responses.push(result);
       } catch (e) {
         console.log(import_chalk2.default.red(`Error processing command: ${e.message}`));
-        throw e;
+        if (!options.forceApplyAll) {
+          throw e;
+        }
       }
     }
     const hasMutations = responses.some((r) => r.parsedCommand.type === "mutation");

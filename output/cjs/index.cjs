@@ -4358,13 +4358,15 @@ var PrismaQlProvider = class {
     for (const command of commandsArray) {
       try {
         const result = await this.apply(command);
-        if (result?.response?.error) {
+        if (result?.response?.error && !options.forceApplyAll) {
           throw new Error("string" === typeof result.response.error ? result.response.error : "Error applying command");
         }
         responses.push(result);
       } catch (e) {
         console.log(import_chalk5.default.red(`Error processing command: ${e.message}`));
-        throw e;
+        if (!options.forceApplyAll) {
+          throw e;
+        }
       }
     }
     const hasMutations = responses.some((r) => r.parsedCommand.type === "mutation");
@@ -5478,26 +5480,30 @@ var addRelation = (prismaState, data) => {
       const idFieldModelA = helper.getIdFieldTypeModel(modelA) || "String";
       const idFieldModelB = helper.getIdFieldTypeModel(modelB) || "String";
       if (!pivotOnly) {
-        builder.model(pivotModelName).field("createdAt", "DateTime").attribute("default", ["now()"]).field(fkA, idFieldModelA).attribute("unique").field(fkB, idFieldModelB).attribute("unique").blockAttribute("id", [fkA, fkB]).field(modelA.toLowerCase(), modelA).attribute("relation", [
+        builder.model(pivotModelName).field("createdAt", "DateTime").attribute("default", ["now()"]).field(fkA, idFieldModelA).attribute("unique").field(fkB, idFieldModelB).blockAttribute("id", [fkA, fkB]).field(modelA.toLowerCase(), modelA).attribute("relation", [
           relationName,
           `fields: [${fkA}]`,
           `references: [id]`
         ]);
         builder.model(modelA).field(camelCase(modelB), `${pivotModelName}?`).attribute("relation", [relationName]);
       } else {
-        builder.model(pivotModelName).field(fkA, idFieldModelA).attribute("unique").field(fkB, idFieldModelB).attribute("unique").field("createdAt", "DateTime").attribute("default", ["now()"]).blockAttribute("id", [fkA, fkB]);
+        builder.model(pivotModelName).field(fkA, idFieldModelA).attribute("unique").field(fkB, idFieldModelB).field("createdAt", "DateTime").attribute("default", ["now()"]).blockAttribute("id", [fkA, fkB]);
       }
       return response.result(`One-to-One relation (with pivot table) added between ${modelA} and ${modelB}`);
     }
   } else if (type == "1:M") {
     if (!pivotTable) {
+      const required = options?.required;
       const aModelName = options?.fkHolder || modelA;
       const bModelName = aModelName === modelA ? modelB : modelA;
       const idFieldModelB = helper.getIdFieldTypeModel(bModelName) || "String";
       const fkKey = fk(bModelName);
       const refModelKey = selfPrefix(bModelName);
-      builder.model(aModelName).field(fkKey, isOptional(idFieldModelB)).field(refModelKey, isOptional(bModelName)).attribute("relation", [relationName, `fields: [${fkKey}]`, `references: [id]`]);
-      builder.model(bModelName).field(import_pluralize2.default.plural(camelCase(aModelName)), aModelName + "[]").attribute("relation", [relationName]);
+      const fkFieldName = options?.fkName || fkKey;
+      const pluralName = options?.pluralName || import_pluralize2.default.plural(camelCase(aModelName));
+      const refFieldName = options?.refName || refModelKey;
+      builder.model(aModelName).field(fkFieldName, !required ? isOptional(idFieldModelB) : idFieldModelB).field(refFieldName, !required ? isOptional(bModelName) : bModelName).attribute("relation", [relationName, `fields: [${fkFieldName}]`, `references: [id]`]);
+      builder.model(bModelName).field(pluralName, aModelName + "[]").attribute("relation", [relationName]);
       return response.result(`One-to-Many relation added between ${modelA} and ${modelB}`);
     } else {
       const fkA = selfPrefix(modelA, true);
@@ -5889,10 +5895,10 @@ var updateGenerator = (prismaState, data) => {
     schema.list.push(newGenerator);
   } else if (options && Object.keys(options).length) {
     const generator = builder.generator(generatorName);
-    const otherOptions = Object.keys(options).filter((key) => key !== "output" && key !== "provider");
+    const otherOptions = Object.keys(options).filter((key) => key !== "output" && key !== "provider" && key !== "binaryTargets");
     if (otherOptions.length) {
       console.log(import_chalk13.default.yellow(`Warning: unknown options ${otherOptions.join(", ")} will be skipped`));
-      const validOptions = ["output", "provider"];
+      const validOptions = ["output", "provider", "binaryTargets"];
       console.log(import_chalk13.default.yellow(`Valid options are: ${validOptions.join(", ")}`));
     }
     if (options?.output) {
@@ -5900,6 +5906,10 @@ var updateGenerator = (prismaState, data) => {
     }
     if (options?.provider) {
       generator.assignment("provider", normalizeQuotes(options.provider));
+    }
+    if (options?.binaryTargets) {
+      const binaryTargets = Array.isArray(options.binaryTargets) ? JSON.stringify(options.binaryTargets) : options.binaryTargets;
+      generator.assignment("binaryTargets", binaryTargets);
     }
   }
   return response.result(`Generator ${generatorName} added successfully!`);

@@ -32,6 +32,9 @@ type PrismaQlDSLOptionMap = {
             fkHolder?: string;
             required?: boolean;
             relationName?: string;
+            pluralName?: string;
+            fkName?: string;
+            refName?: string;
         };
         MODEL: {
             empty?: boolean;
@@ -44,6 +47,7 @@ type PrismaQlDSLOptionMap = {
         GENERATOR: {
             output?: string;
             provider?: string;
+            binaryTargets?: string | string[];
         };
         DB: {
             provider?: string;

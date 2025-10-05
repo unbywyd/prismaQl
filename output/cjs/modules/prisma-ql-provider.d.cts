@@ -10,6 +10,7 @@ import '@mrleebo/prisma-ast';
 type PrismaQlMutationOptions = {
     save?: boolean;
     dryRun?: boolean;
+    forceApplyAll?: boolean;
     confirm?: (schema: string) => Promise<boolean>;
 };
 declare class PrismaQlProvider {

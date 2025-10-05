@@ -2099,26 +2099,30 @@ var addRelation = (prismaState, data) => {
       const idFieldModelA = helper.getIdFieldTypeModel(modelA) || "String";
       const idFieldModelB = helper.getIdFieldTypeModel(modelB) || "String";
       if (!pivotOnly) {
-        builder.model(pivotModelName).field("createdAt", "DateTime").attribute("default", ["now()"]).field(fkA, idFieldModelA).attribute("unique").field(fkB, idFieldModelB).attribute("unique").blockAttribute("id", [fkA, fkB]).field(modelA.toLowerCase(), modelA).attribute("relation", [
+        builder.model(pivotModelName).field("createdAt", "DateTime").attribute("default", ["now()"]).field(fkA, idFieldModelA).attribute("unique").field(fkB, idFieldModelB).blockAttribute("id", [fkA, fkB]).field(modelA.toLowerCase(), modelA).attribute("relation", [
           relationName,
           `fields: [${fkA}]`,
           `references: [id]`
         ]);
         builder.model(modelA).field(camelCase(modelB), `${pivotModelName}?`).attribute("relation", [relationName]);
       } else {
-        builder.model(pivotModelName).field(fkA, idFieldModelA).attribute("unique").field(fkB, idFieldModelB).attribute("unique").field("createdAt", "DateTime").attribute("default", ["now()"]).blockAttribute("id", [fkA, fkB]);
+        builder.model(pivotModelName).field(fkA, idFieldModelA).attribute("unique").field(fkB, idFieldModelB).field("createdAt", "DateTime").attribute("default", ["now()"]).blockAttribute("id", [fkA, fkB]);
       }
       return response.result(`One-to-One relation (with pivot table) added between ${modelA} and ${modelB}`);
     }
   } else if (type == "1:M") {
     if (!pivotTable) {
+      const required = options?.required;
       const aModelName = options?.fkHolder || modelA;
       const bModelName = aModelName === modelA ? modelB : modelA;
       const idFieldModelB = helper.getIdFieldTypeModel(bModelName) || "String";
       const fkKey = fk(bModelName);
       const refModelKey = selfPrefix(bModelName);
-      builder.model(aModelName).field(fkKey, isOptional(idFieldModelB)).field(refModelKey, isOptional(bModelName)).attribute("relation", [relationName, `fields: [${fkKey}]`, `references: [id]`]);
-      builder.model(bModelName).field(import_pluralize2.default.plural(camelCase(aModelName)), aModelName + "[]").attribute("relation", [relationName]);
+      const fkFieldName = options?.fkName || fkKey;
+      const pluralName = options?.pluralName || import_pluralize2.default.plural(camelCase(aModelName));
+      const refFieldName = options?.refName || refModelKey;
+      builder.model(aModelName).field(fkFieldName, !required ? isOptional(idFieldModelB) : idFieldModelB).field(refFieldName, !required ? isOptional(bModelName) : bModelName).attribute("relation", [relationName, `fields: [${fkFieldName}]`, `references: [id]`]);
+      builder.model(bModelName).field(pluralName, aModelName + "[]").attribute("relation", [relationName]);
       return response.result(`One-to-Many relation added between ${modelA} and ${modelB}`);
     } else {
       const fkA = selfPrefix(modelA, true);
