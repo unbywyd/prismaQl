@@ -2530,10 +2530,10 @@ var updateGenerator = (prismaState, data) => {
     schema.list.push(newGenerator);
   } else if (options && Object.keys(options).length) {
     const generator = builder.generator(generatorName);
-    const otherOptions = Object.keys(options).filter((key) => key !== "output" && key !== "provider" && key !== "binaryTargets");
+    const otherOptions = Object.keys(options).filter((key) => key !== "output" && key !== "provider");
     if (otherOptions.length) {
       console.log(import_chalk2.default.yellow(`Warning: unknown options ${otherOptions.join(", ")} will be skipped`));
-      const validOptions = ["output", "provider", "binaryTargets"];
+      const validOptions = ["output", "provider"];
       console.log(import_chalk2.default.yellow(`Valid options are: ${validOptions.join(", ")}`));
     }
     if (options?.output) {
@@ -2541,11 +2541,6 @@ var updateGenerator = (prismaState, data) => {
     }
     if (options?.provider) {
       generator.assignment("provider", normalizeQuotes(options.provider));
-    }
-    if (options?.binaryTargets) {
-      console.log(options.binaryTargets);
-      const binaryTargets = Array.isArray(options.binaryTargets) ? JSON.stringify(options.binaryTargets) : options.binaryTargets;
-      generator.assignment("binaryTargets", binaryTargets);
     }
   }
   return response.result(`Generator ${generatorName} added successfully!`);

@@ -45,7 +45,6 @@ export type PrismaQlDSLOptionMap = {
         GENERATOR: {
             output?: string;
             provider?: string;
-            binaryTargets?: string | string[];
         };
         DB: {
             provider?: string;
